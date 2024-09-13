@@ -62,7 +62,11 @@
 			<version>1.18.20.0</version>
 			<scope>provided</scope>
 		</dependency>
-
+		<!-- Spring data rest -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-rest</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
