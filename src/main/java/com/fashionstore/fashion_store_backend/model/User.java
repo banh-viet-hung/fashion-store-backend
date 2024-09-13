@@ -28,7 +28,11 @@ public class User {
     private String phoneNumber;
 
 
-    private String address;
+    // Một người dùng có thể có nhiều địa chỉ
+    // Quan hệ 1-n với Address
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Address> addresses;
+
 
     // Một người dùng có thể tạo nhiều feedback
     // Quan hệ 1-n với Feedback

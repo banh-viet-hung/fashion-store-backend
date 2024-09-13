@@ -19,8 +19,10 @@ public class Order {
     // Ngày đặt hàng
     private LocalDateTime orderDate;
 
-
-    private String shippingAddress;
+    // Địa chỉ giao hàng
+    // Quan hệ n-1 với Address
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    private Address shippingAddress;
 
     // Tổng tiền sản phẩm
     private double totalProductPrice;
