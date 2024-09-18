@@ -25,26 +25,39 @@ public class Product {
     // Đánh giá trung bình
     private double averageRating;
 
+    @Lob
     private String description;
-
-    // Một sản phẩm có thể có nhiều ảnh
-    // Quan hệ 1-n với Image
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<Image> images;
 
     private int quantity;
 
-    private String size;
+    // Một sản phẩm có thể có nhiều size
+    // Quan hệ n-n với Size
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinTable(name = "product_size", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
+    private Set<Size> sizes;
 
-    private String color;
+    // Một sản phẩm có thể có nhiều màu
+    // Quan hệ n-n với Color
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinTable(name = "product_color", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "color_id"))
+    private Set<Color> colors;
 
     private String brand;
+
+    // mô tả chi tiết
+    @Lob
+    private String detail;
 
     // ngày tạo sản phẩm
     private LocalDateTime createdAt;
 
     // ngày cập nhật sản phẩm
     private LocalDateTime updatedAt;
+
+    // Một sản phẩm có thể có nhiều ảnh
+    // Quan hệ 1-n với Image
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Image> images;
 
     // Quan hệ n-n với Category
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
@@ -64,4 +77,20 @@ public class Product {
     // Quan hệ 1-n với FavoriteProduct
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<FavoriteProduct> favoriteProducts;
+
+    // Một sản phẩm có thể nằm trong nhiều giỏ hàng
+    // Quan hệ 1-n với CartProduct
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<CartProduct> cartProducts;
+
+    // Các sản phẩm liên quan
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinTable(name = "related_product", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "related_id"))
+    private Set<Product> relatedProducts;
+
+    // Một sản phẩm có nhiều tính năng
+    // Quan hệ n-n với Feature
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinTable(name = "product_feature", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "feature_id"))
+    private Set<Feature> features;
 }

@@ -19,6 +19,9 @@ public class Order {
     // Ngày đặt hàng
     private LocalDateTime orderDate;
 
+    // Trạng thái đơn hàng
+    private String status;
+
     // Địa chỉ giao hàng
     // Quan hệ n-1 với Address
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
@@ -55,4 +58,9 @@ public class Order {
     // Quan hệ 1-n với OrderDetail
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<OrderDetail> orderDetails;
+
+    // Một đơn hàng được quản lý bởi một nhân viên
+    // Quan hệ n-1 với User
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    private User staff;
 }

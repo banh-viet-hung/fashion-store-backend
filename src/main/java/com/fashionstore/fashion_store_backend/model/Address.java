@@ -13,11 +13,26 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String street;
+    // fullName
+    private String fullName;
+
+    // phoneNumber
+    private String phoneNumber;
+
+    // address
+    private String address;
+
+    // city
     private String city;
-    private String state;
-    private String zipCode;
-    private String country;
+
+    // district
+    private String district;
+
+    // phường, xã
+    private String ward;
+
+    // Loại địa chỉ
+    private String type;
 
     // Một địa chỉ thuộc một người dùng
     // Quan hệ n-1 với User

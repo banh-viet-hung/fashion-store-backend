@@ -3,6 +3,7 @@ package com.fashionstore.fashion_store_backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Set;
 
 @Entity
@@ -13,26 +14,36 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String firstName;
+    // fullName
+    private String fullName;
 
-    private String lastName;
+    // phoneNumber
+    private String phoneNumber;
 
-    private String username;
+    // gender
+    private String gender;
+
+    // dateOfBirth
+    private LocalDate dateOfBirth;
+
+    // chiều cao
+    private int height;
+
+    // cân nặng
+    private int weight;
+
+    // email đăng nhập
+    private String email;
 
     private String password;
 
-    private String gender;
-
-    private String email;
-
-    private String phoneNumber;
-
+    // Avatar
+    private String avatar;
 
     // Một người dùng có thể có nhiều địa chỉ
     // Quan hệ 1-n với Address
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Address> addresses;
-
 
     // Một người dùng có thể tạo nhiều feedback
     // Quan hệ 1-n với Feedback
@@ -55,4 +66,13 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<FavoriteProduct> favoriteProducts;
 
+    // Một người dùng có thể có nhiều sản phẩm trong giỏ hàng
+    // Quan hệ 1-n với CartProduct
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<CartProduct> cartProducts;
+
+    // Một nhân viên quản lý nhiều đơn hàng
+    // Quan hệ 1-n với Order
+    @OneToMany(mappedBy = "staff", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Order> staffOrders;
 }

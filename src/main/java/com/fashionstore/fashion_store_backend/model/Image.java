@@ -16,12 +16,8 @@ public class Image {
     // Là thumbnail hay không
     private boolean isThumbnail;
 
-    // Cách 1: Lưu ảnh dưới dạng URL (lưu ảnh trên server)
+    // Dữ liệu ảnh
     private String url;
-
-    // Cách 2: Lưu ảnh dưới dạng base64 (lưu ảnh trực tiếp trong database)
-    @Lob
-    private String base64;
 
     // Văn bản thay thế cho ảnh
     private String altText;
@@ -35,6 +31,5 @@ public class Image {
     // Quan hệ n-1 với Product
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private Product product;
-
 
 }

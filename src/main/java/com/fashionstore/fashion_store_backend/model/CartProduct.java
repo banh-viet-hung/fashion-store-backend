@@ -5,13 +5,12 @@ import lombok.Data;
 
 @Entity
 @Data
-public class OrderDetail {
-
+public class CartProduct {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // San phẩm trong chi tiết đơn hàng
+    // Sản phẩm trong giỏ hàng
     // Quan hệ n-1 với Product
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private Product product;
@@ -25,10 +24,10 @@ public class OrderDetail {
     // Màu sản phẩm
     private String color;
 
-    // Thuộc đơn hàng nào
-    // Quan hệ n-1 với Order
+    // Thuộc user nào
+    // Quan hệ n-1 với User
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
-    private Order order;
+    private User user;
 
     // Giá sản phẩm
     private double totalPrice;
