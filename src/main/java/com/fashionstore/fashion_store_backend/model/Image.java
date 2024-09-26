@@ -29,7 +29,7 @@ public class Image {
     private LocalDateTime updatedAt;
 
     // Quan hệ n-1 với Product
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private Product product;
 
 }

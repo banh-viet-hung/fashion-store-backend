@@ -3,7 +3,7 @@ package com.fashionstore.fashion_store_backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Data
@@ -19,7 +19,7 @@ public class Size {
 
     // Một size có thể thuộc nhiều sản phẩm
     // Quan hệ n-n với Product
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinTable(name = "product_size", joinColumns = @JoinColumn(name = "size_id"), inverseJoinColumns = @JoinColumn(name = "product_id"))
-    private Set<Product> products;
+    private List<Product> products;
 }

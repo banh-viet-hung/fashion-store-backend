@@ -4,7 +4,7 @@ package com.fashionstore.fashion_store_backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Data
@@ -23,7 +23,7 @@ public class Feature {
 
     // Quan hệ n-n với Product
     // Một feature có thể thuộc nhiều sản phẩm
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinTable(name = "product_feature", joinColumns = @JoinColumn(name = "feature_id"), inverseJoinColumns = @JoinColumn(name = "product_id"))
-    private Set<Product> products;
+    private List<Product> products;
 }

@@ -12,7 +12,7 @@ public class CartProduct {
 
     // Sản phẩm trong giỏ hàng
     // Quan hệ n-1 với Product
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private Product product;
 
     // Số lượng sản phẩm
@@ -26,7 +26,7 @@ public class CartProduct {
 
     // Thuộc user nào
     // Quan hệ n-1 với User
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private User user;
 
     // Giá sản phẩm
