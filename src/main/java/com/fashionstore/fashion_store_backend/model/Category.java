@@ -22,6 +22,10 @@ public class Category {
 
     private LocalDateTime updatedAt;
 
+    // slug của danh mục
+    @Column(unique = true)
+    private String slug;
+
     // Hình ảnh đại diện cho danh mục
     private String image;
 
