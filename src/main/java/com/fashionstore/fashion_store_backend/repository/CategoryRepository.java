@@ -1,6 +1,7 @@
 package com.fashionstore.fashion_store_backend.repository;
 
 import com.fashionstore.fashion_store_backend.model.Category;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

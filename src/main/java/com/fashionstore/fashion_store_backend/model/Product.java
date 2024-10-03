@@ -27,6 +27,7 @@ public class Product {
     private double averageRating;
 
     @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private int quantity;
@@ -47,6 +48,7 @@ public class Product {
 
     // mô tả chi tiết
     @Lob
+    @Column(columnDefinition = "TEXT")
     private String detail;
 
     // ngày tạo sản phẩm
