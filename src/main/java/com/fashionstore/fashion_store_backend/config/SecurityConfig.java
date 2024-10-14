@@ -4,6 +4,7 @@ import com.fashionstore.fashion_store_backend.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -36,10 +37,25 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(authz -> authz.requestMatchers("/user/register").permitAll().requestMatchers("/product").permitAll().requestMatchers("/user").hasAuthority("ADMIN").anyRequest().authenticated()).httpBasic(Customizer.withDefaults()); // Sử dụng HTTP Basic Authentication
+        http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(authz -> authz
+                // Endpoint công khai
+                .requestMatchers(Endpoints.PUBLIC_GET_ENDPOINS).permitAll().requestMatchers(Endpoints.PUBLIC_POST_ENDPOINS).permitAll()
+
+                // Endpoint dành cho USER
+                .requestMatchers(HttpMethod.GET, Endpoints.USER_GET_ENDPOINS).hasAnyAuthority("USER", "ADMIN").requestMatchers(HttpMethod.POST, Endpoints.USER_POST_ENDPOINS).hasAuthority("USER")
+
+                // Endpoint dành cho STAFF
+                .requestMatchers(HttpMethod.GET, Endpoints.STAFF_GET_ENDPOINS).hasAnyAuthority("STAFF", "ADMIN").requestMatchers(HttpMethod.POST, Endpoints.STAFF_POST_ENDPOINS).hasAuthority("STAFF")
+
+                // Endpoint dành cho ADMIN
+                .requestMatchers(HttpMethod.GET, Endpoints.ADMIN_GET_ENDPOINS).hasAuthority("ADMIN").requestMatchers(HttpMethod.POST, Endpoints.ADMIN_POST_ENDPOINS).hasAuthority("ADMIN")
+
+                // Tất cả các request khác yêu cầu xác thực
+                .anyRequest().authenticated()).httpBasic(Customizer.withDefaults()); // Sử dụng HTTP Basic Authentication
 
         return http.build();
     }
+
 
     @Bean
     public AuthenticationManager authManager(HttpSecurity http) throws Exception {

@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,12 +32,10 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> {
             errors.add(error.getDefaultMessage());
         });
-        // Tạo một thông điệp tổng hợp từ danh sách lỗi
         String message = String.join(", ", errors);
         ApiResponse response = new ApiResponse(message, false);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex) {

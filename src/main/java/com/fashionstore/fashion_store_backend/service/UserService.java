@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 public class UserService {
 
@@ -17,6 +19,9 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmailService emailService;
 
     @Transactional
     public User registerUser(UserRegistrationDto registrationDto) {
@@ -27,10 +32,28 @@ public class UserService {
         User user = new User();
         user.setFullName(registrationDto.getFullName());
         user.setEmail(registrationDto.getEmail());
-        user.setPassword(passwordEncoder.encode(registrationDto.getPassword())); // Mã hóa mật khẩu
+        user.setPassword(passwordEncoder.encode(registrationDto.getPassword()));
 
         return userRepository.save(user);
     }
+
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public void sendPasswordResetEmail(String email) {
+        emailService.sendPasswordResetEmail(email);
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepository.findByResetToken(token);
+        if (user == null || user.getResetTokenExpiration().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetToken(null);
+        user.setResetTokenExpiration(null);
+        userRepository.save(user);
+    }
 }
-
-
