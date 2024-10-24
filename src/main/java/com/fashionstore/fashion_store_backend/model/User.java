@@ -19,13 +19,10 @@ public class User {
     private String phoneNumber;
     private String gender;
     private LocalDate dateOfBirth;
-    private int height;
-    private int weight;
     private String email;
     private String password;
     private String avatar;
 
-    // Thêm trường cho token và thời gian hết hạn
     private String resetToken; // Token cho việc đặt lại mật khẩu
     private LocalDateTime resetTokenExpiration; // Thời gian hết hạn của token
 

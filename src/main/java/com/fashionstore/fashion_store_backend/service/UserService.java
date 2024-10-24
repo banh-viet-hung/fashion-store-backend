@@ -2,7 +2,9 @@ package com.fashionstore.fashion_store_backend.service;
 
 import com.fashionstore.fashion_store_backend.dto.UserRegistrationDto;
 import com.fashionstore.fashion_store_backend.exception.EmailAlreadyExistsException;
+import com.fashionstore.fashion_store_backend.model.Role;
 import com.fashionstore.fashion_store_backend.model.User;
+import com.fashionstore.fashion_store_backend.repository.RoleRepository;
 import com.fashionstore.fashion_store_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -19,6 +22,9 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private EmailService emailService;
@@ -34,8 +40,15 @@ public class UserService {
         user.setEmail(registrationDto.getEmail());
         user.setPassword(passwordEncoder.encode(registrationDto.getPassword()));
 
+        // Lấy role USER từ database và gán cho người dùng
+        Role userRole = roleRepository.findByName("USER");
+        if (userRole != null) {
+            user.setRoles(List.of(userRole)); // Gán role USER cho người dùng
+        }
+
         return userRepository.save(user);
     }
+
 
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email);

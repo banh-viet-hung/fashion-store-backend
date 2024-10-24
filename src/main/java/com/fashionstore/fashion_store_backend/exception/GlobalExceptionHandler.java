@@ -8,38 +8,48 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiResponse> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
-        ApiResponse response = new ApiResponse(ex.getMessage(), false);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildResponseEntity(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponse> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-        ApiResponse response = new ApiResponse(ex.getMessage(), false);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return buildResponseEntity(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        List<String> errors = new ArrayList<>();
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errors.add(error.getDefaultMessage());
-        });
-        String message = String.join(", ", errors);
-        ApiResponse response = new ApiResponse(message, false);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        String message = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .map(error -> error.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        return buildResponseEntity(message, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(TokenInvalidException.class)
+    public ResponseEntity<ApiResponse> handleTokenInvalidException(TokenInvalidException ex) {
+        return buildResponseEntity(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex) {
-        ApiResponse response = new ApiResponse("Đã xảy ra lỗi: " + ex.getMessage(), false);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        return buildResponseEntity("Đã xảy ra lỗi: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> handleGenericException(Exception ex) {
+        return buildResponseEntity("Lỗi không xác định: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private ResponseEntity<ApiResponse> buildResponseEntity(String message, HttpStatus status) {
+        ApiResponse response = new ApiResponse(message, false);
+        return ResponseEntity.status(status).body(response);
     }
 }
