@@ -38,6 +38,12 @@ public class GlobalExceptionHandler {
         return buildResponseEntity(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(InvalidLoginException.class)
+    public ResponseEntity<ApiResponse> handleInvalidLoginException(InvalidLoginException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponse(ex.getMessage(), false));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex) {
         return buildResponseEntity("Đã xảy ra lỗi: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

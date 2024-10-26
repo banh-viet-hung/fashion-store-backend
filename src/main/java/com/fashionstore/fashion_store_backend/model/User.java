@@ -23,8 +23,8 @@ public class User {
     private String password;
     private String avatar;
 
-    private String resetToken; // Token cho việc đặt lại mật khẩu
-    private LocalDateTime resetTokenExpiration; // Thời gian hết hạn của token
+    private String resetToken;
+    private LocalDateTime resetTokenExpiration;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Address> addresses;
@@ -35,9 +35,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Order> orders;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH}, fetch = FetchType.EAGER)
-    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private List<Role> roles;
+    // Chỉ định một Role duy nhất cho User
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id") // Khóa ngoại trong bảng User
+    private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<FavoriteProduct> favoriteProducts;

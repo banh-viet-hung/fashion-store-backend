@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class UserService {
@@ -43,12 +42,11 @@ public class UserService {
         // Lấy role USER từ database và gán cho người dùng
         Role userRole = roleRepository.findByName("USER");
         if (userRole != null) {
-            user.setRoles(List.of(userRole)); // Gán role USER cho người dùng
+            user.setRole(userRole); // Gán role USER cho người dùng
         }
 
         return userRepository.save(user);
     }
-
 
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email);

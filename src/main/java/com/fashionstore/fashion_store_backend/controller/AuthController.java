@@ -1,5 +1,6 @@
 package com.fashionstore.fashion_store_backend.controller;
 
+import com.fashionstore.fashion_store_backend.dto.LoginResponseDto;
 import com.fashionstore.fashion_store_backend.dto.UserLoginDto;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.AuthService; // Thay đổi import
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -17,8 +19,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@Valid @RequestBody UserLoginDto userLoginDto) {
-        String token = authService.login(userLoginDto.getEmail(), userLoginDto.getPassword(), userLoginDto.isRememberMe());
-        ApiResponse response = new ApiResponse("Đăng nhập thành công", true, token);
+        LoginResponseDto loginResponse = authService.login(userLoginDto.getEmail(), userLoginDto.getPassword(), userLoginDto.isRememberMe());
+        ApiResponse response = new ApiResponse("Đăng nhập thành công", true, loginResponse);
         return ResponseEntity.ok(response);
     }
+
 }

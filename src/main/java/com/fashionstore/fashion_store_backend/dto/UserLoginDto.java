@@ -14,5 +14,5 @@ public class UserLoginDto {
     @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
 
-    private boolean rememberMe; // Thuộc tính để xác định "Lưu mật khẩu"
+    private boolean rememberMe;
 }

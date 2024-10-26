@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -14,7 +13,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private final String SECRET_KEY = "my_secret_key";
-    private final long EXPIRATION_TIME_ONE_HOUR = 1000L * 60 * 60; // 1 giờ
+    private final long EXPIRATION_TIME_ONE_HOUR = 1000L * 60 * 60*24; // 1 giờ
     private final long EXPIRATION_TIME_THIRTY_DAYS = 1000L * 60 * 60 * 24 * 30; // 30 ngày
 
     public String createToken(Map<String, Object> claims, String subject, long expirationTime) {
@@ -28,9 +27,9 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateToken(String username, List<String> roles, boolean rememberMe) {
+    public String generateToken(String username, String role, boolean rememberMe) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", roles);
+        claims.put("role", role); // Lưu vai trò dưới dạng chuỗi
         long expirationTime = rememberMe ? EXPIRATION_TIME_THIRTY_DAYS : EXPIRATION_TIME_ONE_HOUR;
         return createToken(claims, username, expirationTime);
     }
@@ -45,6 +44,14 @@ public class JwtUtil {
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> (String) claims.get("role")); // Lấy vai trò từ claims
+    }
+
+    public long extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration).getTime(); // Lấy thời gian hết hạn
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
