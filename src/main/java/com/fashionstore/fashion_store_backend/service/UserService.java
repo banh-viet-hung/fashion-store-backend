@@ -1,12 +1,15 @@
 package com.fashionstore.fashion_store_backend.service;
 
+import com.fashionstore.fashion_store_backend.dto.UserInfoDto;
 import com.fashionstore.fashion_store_backend.dto.UserRegistrationDto;
+import com.fashionstore.fashion_store_backend.dto.UserUpdateDto;
 import com.fashionstore.fashion_store_backend.exception.EmailAlreadyExistsException;
 import com.fashionstore.fashion_store_backend.model.Role;
 import com.fashionstore.fashion_store_backend.model.User;
 import com.fashionstore.fashion_store_backend.repository.RoleRepository;
 import com.fashionstore.fashion_store_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,4 +70,33 @@ public class UserService {
         user.setResetTokenExpiration(null);
         userRepository.save(user);
     }
+
+    public UserInfoDto getUserInfo(String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+
+        return new UserInfoDto(
+                user.getFullName(),
+                user.getPhoneNumber(),
+                user.getGender(),
+                user.getDateOfBirth()
+        );
+    }
+
+    public User updateUserInfo(String username, UserUpdateDto userUpdateDto) {
+        User user = userRepository.findByEmail(username);
+        if (user == null) {
+            throw new RuntimeException("Người dùng không tồn tại");
+        }
+
+        user.setFullName(userUpdateDto.getFullName());
+        user.setPhoneNumber(userUpdateDto.getPhoneNumber());
+        user.setGender(userUpdateDto.getGender());
+        user.setDateOfBirth(userUpdateDto.getDateOfBirth());
+
+        return userRepository.save(user);
+    }
+
 }

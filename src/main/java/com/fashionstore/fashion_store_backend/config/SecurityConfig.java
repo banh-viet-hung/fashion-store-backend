@@ -15,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -41,32 +44,42 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http.cors(cors -> {
+                    cors.configurationSource(request -> {
+                        CorsConfiguration corsConfig = new CorsConfiguration();
+                        corsConfig.addAllowedOrigin(Endpoints.front_end_host);
+                        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+                        corsConfig.addAllowedHeader("*");
+                        return corsConfig;
+                    });
+                })
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
                         // Các endpoint công khai
                         .requestMatchers(Endpoints.PUBLIC_GET_ENDPOINS).permitAll()
                         .requestMatchers(Endpoints.PUBLIC_POST_ENDPOINS).permitAll()
 
                         // Endpoint dành cho USER
-                        .requestMatchers(HttpMethod.GET, Endpoints.USER_GET_ENDPOINS).hasAuthority("USER")
-                        .requestMatchers(HttpMethod.POST, Endpoints.USER_POST_ENDPOINS).hasAuthority("USER")
+                        .requestMatchers(HttpMethod.GET, Endpoints.USER_GET_ENDPOINS).hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, Endpoints.USER_POST_ENDPOINS).hasAnyAuthority("USER", "ADMIN") // Chỉ cho phép USER và ADMIN
 
-                        // Endpoint dành cho STAFF
-                        .requestMatchers(HttpMethod.GET, Endpoints.STAFF_GET_ENDPOINS).hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, Endpoints.STAFF_POST_ENDPOINS).hasAuthority("STAFF")
+                        // Endpoint dành cho STAFF (không có quyền POST để cập nhật user)
+                        .requestMatchers(HttpMethod.GET, Endpoints.STAFF_GET_ENDPOINS).hasAnyAuthority("STAFF")
+                        .requestMatchers(HttpMethod.POST, Endpoints.STAFF_POST_ENDPOINS).hasAnyAuthority("STAFF")
 
                         // Endpoint dành cho ADMIN
-                        .requestMatchers(HttpMethod.GET, Endpoints.ADMIN_GET_ENDPOINS).hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, Endpoints.ADMIN_POST_ENDPOINS).hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, Endpoints.ADMIN_GET_ENDPOINS).hasAnyAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, Endpoints.ADMIN_POST_ENDPOINS).hasAnyAuthority("ADMIN")
 
                         // Tất cả các yêu cầu khác yêu cầu xác thực
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults()) // Sử dụng Customizer để thay thế httpBasic()
+                .httpBasic(Customizer.withDefaults())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 
     @Bean
     public AuthenticationManager authManager(HttpSecurity http) throws Exception {

@@ -1,22 +1,37 @@
 package com.fashionstore.fashion_store_backend.config;
 
 public class Endpoints {
+
+    public static final String front_end_host = "http://localhost:3000";
+
     // Các endpoint công khai
     public static final String[] PUBLIC_GET_ENDPOINS = {
-            "/address", "/address/**",
-            "/cartProduct", "/cartProduct/**",
-            "/category", "/category/**",
-            "/color", "/color/**",
-            "/favoriteProduct", "/favoriteProduct/**",
-            "/feature", "/feature/**",
-            "/feedback", "/feedback/**",
-            "/image", "/image/**",
-//            "/order", "/order/**",
-            "/paymentMethod", "/paymentMethod/**",
-            "/product", "/product/**",
-            "/role", "/role/**",
-            "/shippingMethod", "/shippingMethod/**",
-            "/size", "/size/**",
+            "/address",
+            "/address/**",
+            "/cartProduct",
+            "/cartProduct/**",
+            "/category",
+            "/category/**",
+            "/color",
+            "/color/**",
+            "/favoriteProduct",
+            "/favoriteProduct/**",
+            "/feature",
+            "/feature/**",
+            "/feedback",
+            "/feedback/**",
+            "/image",
+            "/image/**",
+            "/paymentMethod",
+            "/paymentMethod/**",
+            "/product",
+            "/product/**",
+            "/role",
+            "/role/**",
+            "/shippingMethod",
+            "/shippingMethod/**",
+            "/size",
+            "/size/**",
             "/user/check-email", // Endpoint kiểm tra email
             "/user/request-password-reset", // Endpoint yêu cầu đặt lại mật khẩu
             "/user/reset-password/**" // Endpoint đặt lại mật khẩu
@@ -29,35 +44,49 @@ public class Endpoints {
 
     // Các endpoint dành cho User
     public static final String[] USER_GET_ENDPOINS = {
-//            "/user", // Thông tin người dùng (chỉ cho phép người dùng tự xem)
+            "/user/info", // Thông tin người dùng (chỉ cho phép người dùng tự xem)
             "/order" // Danh sách đơn hàng của user
     };
 
     public static final String[] USER_POST_ENDPOINS = {
-            "/feedback" // Người dùng có thể gửi phản hồi
+            "/feedback", // Người dùng có thể gửi phản hồi
+            "/user/update" // Cập nhật thông tin người dùng
     };
 
     // Các endpoint dành cho Admin
     public static final String[] ADMIN_GET_ENDPOINS = {
-            "/user", "/user/**", // Quản lý người dùng
-            "/category", "/category/**", // Quản lý danh mục
-            "/color", "/color/**", // Quản lý màu sắc
-            "/feature", "/feature/**", // Quản lý đặc điểm
-            "/product", "/product/**" // Quản lý sản phẩm
+            "/user",
+            "/user/**", // Quản lý người dùng
+            "/category",
+            "/category/**", // Quản lý danh mục
+            "/color",
+            "/color/**", // Quản lý màu sắc
+            "/feature",
+            "/feature/**", // Quản lý đặc điểm
+            "/product",
+            "/product/**", // Quản lý sản phẩm
+            "/order" // Quản lý đơn hàng
     };
 
     public static final String[] ADMIN_POST_ENDPOINS = {
-            "/address", "/cartProduct",
-            "/category", "/color",
-            "/feature", "/feedback",
-            "/image", "/order",
-            "/paymentMethod", "/product",
-            "/role", "/shippingMethod", "/size"
+            "/address",
+            "/cartProduct",
+            "/category",
+            "/color",
+            "/feature",
+            "/feedback",
+            "/image",
+            "/order",
+            "/paymentMethod",
+            "/product",
+            "/role",
+            "/shippingMethod",
+            "/size",
+            "/user/**" // Quản lý thông tin người dùng
     };
 
     // Các endpoint dành cho Staff
     public static final String[] STAFF_GET_ENDPOINS = {
-            "/order", "/order/**", // Danh sách và chi tiết đơn hàng
             "/feedback" // Xem phản hồi
     };
 

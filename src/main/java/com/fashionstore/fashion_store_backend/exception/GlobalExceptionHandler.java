@@ -26,10 +26,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult().getFieldErrors()
-                .stream()
-                .map(error -> error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
+        String message = ex.getBindingResult().getFieldErrors().stream().map(error -> error.getDefaultMessage()).collect(Collectors.joining(", "));
         return buildResponseEntity(message, HttpStatus.BAD_REQUEST);
     }
 
@@ -40,8 +37,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidLoginException.class)
     public ResponseEntity<ApiResponse> handleInvalidLoginException(InvalidLoginException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse(ex.getMessage(), false));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(ex.getMessage(), false));
     }
 
     @ExceptionHandler(RuntimeException.class)

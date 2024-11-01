@@ -38,9 +38,10 @@ public class JwtUtil {
         try {
             return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
         } catch (JwtException e) {
-            throw new TokenInvalidException("Token không hợp lệ: " + e.getMessage());
+            throw new TokenInvalidException("Token không hợp lệ hoặc đã hết hạn."); // Ném ra ngoại lệ
         }
     }
+
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

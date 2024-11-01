@@ -35,35 +35,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String jwt = authorizationHeader.substring(7);
-            processToken(jwt, response);
+            if (!processToken(jwt, response)) {
+                // Nếu processToken trả về false, không cần tiếp tục
+                return;
+            }
         }
 
+        // Nếu không có token hoặc token hợp lệ, tiếp tục
         filterChain.doFilter(request, response);
     }
 
-    private void processToken(String jwt, HttpServletResponse response) throws IOException {
+    private boolean processToken(String jwt, HttpServletResponse response) throws IOException {
         try {
             String username = jwtUtil.extractUsername(jwt);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                System.out.println("Processing token for " + username);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 if (userDetails != null && jwtUtil.validateToken(jwt, username)) {
-                    System.out.println("Token is valid");
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    System.out.println(authenticationToken);
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                    if (authentication != null) {
-                        System.out.println("Authentication set successfully: " + authentication);
-                    } else {
-                        System.out.println("Authentication was not set.");
-                    }
+                    System.out.println(authenticationToken);
+                    return true; // Token hợp lệ, trả về true
                 }
             }
+            return false; // Token không hợp lệ
         } catch (TokenInvalidException ex) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write(new ObjectMapper().writeValueAsString(new ApiResponse("Invalid Token", false)));
+            response.getWriter().write(new ObjectMapper().writeValueAsString(new ApiResponse(ex.getMessage(), false)));
+            return false; // Đã xử lý lỗi, trả về false
         }
     }
+
+
 }
