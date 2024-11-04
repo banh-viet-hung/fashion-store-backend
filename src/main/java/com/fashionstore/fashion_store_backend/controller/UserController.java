@@ -1,9 +1,6 @@
 package com.fashionstore.fashion_store_backend.controller;
 
-import com.fashionstore.fashion_store_backend.dto.ResetPasswordDto;
-import com.fashionstore.fashion_store_backend.dto.UserInfoDto;
-import com.fashionstore.fashion_store_backend.dto.UserRegistrationDto;
-import com.fashionstore.fashion_store_backend.dto.UserUpdateDto;
+import com.fashionstore.fashion_store_backend.dto.*;
 import com.fashionstore.fashion_store_backend.model.User;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.UserService;
@@ -94,6 +91,28 @@ public class UserController {
 
         userService.updateUserInfo(username, userUpdateDto);
         return ResponseEntity.ok(new ApiResponse("Cập nhật thông tin thành công", true));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse> changePassword(@Valid @RequestBody ChangePasswordDto changePasswordDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName(); // Lấy tên người dùng từ token
+
+        try {
+            userService.changePassword(username, changePasswordDto);
+            return ResponseEntity.ok(new ApiResponse("Mật khẩu đã được đổi thành công", true));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+    @GetMapping("/avatar-and-fullname")
+    public ResponseEntity<ApiResponse> getUserAvatarAndFullName() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName(); // Lấy tên người dùng từ token
+
+        UserAvatarDto userAvatarDto = userService.getUserAvatarAndFullName(username);
+        return ResponseEntity.ok(new ApiResponse("Thông tin người dùng", true, userAvatarDto));
     }
 
 }

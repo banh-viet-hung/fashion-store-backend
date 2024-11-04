@@ -1,8 +1,6 @@
 package com.fashionstore.fashion_store_backend.service;
 
-import com.fashionstore.fashion_store_backend.dto.UserInfoDto;
-import com.fashionstore.fashion_store_backend.dto.UserRegistrationDto;
-import com.fashionstore.fashion_store_backend.dto.UserUpdateDto;
+import com.fashionstore.fashion_store_backend.dto.*;
 import com.fashionstore.fashion_store_backend.exception.EmailAlreadyExistsException;
 import com.fashionstore.fashion_store_backend.model.Role;
 import com.fashionstore.fashion_store_backend.model.User;
@@ -85,7 +83,7 @@ public class UserService {
         );
     }
 
-    public User updateUserInfo(String username, UserUpdateDto userUpdateDto) {
+    public void updateUserInfo(String username, UserUpdateDto userUpdateDto) {
         User user = userRepository.findByEmail(username);
         if (user == null) {
             throw new RuntimeException("Người dùng không tồn tại");
@@ -96,7 +94,38 @@ public class UserService {
         user.setGender(userUpdateDto.getGender());
         user.setDateOfBirth(userUpdateDto.getDateOfBirth());
 
-        return userRepository.save(user);
+        userRepository.save(user);
+    }
+
+    public void changePassword(String username, ChangePasswordDto changePasswordDto) {
+        User user = userRepository.findByEmail(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+
+        // Kiểm tra mật khẩu cũ
+        if (!passwordEncoder.matches(changePasswordDto.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không đúng");
+        }
+
+        // Kiểm tra mật khẩu mới và xác nhận mật khẩu
+        if (!changePasswordDto.getNewPassword().equals(changePasswordDto.getConfirmPassword())) {
+            throw new RuntimeException("Mật khẩu mới và xác nhận mật khẩu không khớp");
+        }
+
+        // Cập nhật mật khẩu mới
+        user.setPassword(passwordEncoder.encode(changePasswordDto.getNewPassword()));
+        userRepository.save(user);
+    }
+
+
+    public UserAvatarDto getUserAvatarAndFullName(String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+
+        return new UserAvatarDto(user.getFullName(), user.getAvatar());
     }
 
 }

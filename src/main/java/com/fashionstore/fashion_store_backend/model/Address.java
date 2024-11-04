@@ -26,8 +26,8 @@ public class Address {
     // phường, xã
     private String ward;
 
-    // Loại địa chỉ
-    private String type;
+    // có phải là địa chỉ mặc định không
+    private boolean defaultAddress;
 
     // Một địa chỉ thuộc một người dùng
     // Quan hệ n-1 với User
