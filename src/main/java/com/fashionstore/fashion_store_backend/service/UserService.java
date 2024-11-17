@@ -128,4 +128,15 @@ public class UserService {
         return new UserAvatarDto(user.getFullName(), user.getAvatar());
     }
 
+    public void updateUserAvatar(String email, String avatarUrl) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+
+        user.setAvatar(avatarUrl);
+        userRepository.save(user);
+    }
+
+
 }

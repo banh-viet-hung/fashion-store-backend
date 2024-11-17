@@ -3,6 +3,7 @@ package com.fashionstore.fashion_store_backend.controller;
 import com.fashionstore.fashion_store_backend.dto.*;
 import com.fashionstore.fashion_store_backend.model.User;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
+import com.fashionstore.fashion_store_backend.service.FavoriteProductService;
 import com.fashionstore.fashion_store_backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -21,6 +23,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FavoriteProductService favoriteProductService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto) {
@@ -115,4 +120,61 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse("Thông tin người dùng", true, userAvatarDto));
     }
 
+    @PutMapping("/update-avatar")
+    public ResponseEntity<ApiResponse> updateAvatar(@RequestBody Map<String, String> request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName(); // Lấy email từ token
+
+        String avatarUrl = request.get("avatar");
+
+        if (avatarUrl == null || avatarUrl.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ApiResponse("URL avatar không được để trống", false));
+        }
+
+        userService.updateUserAvatar(email, avatarUrl);
+        return ResponseEntity.ok(new ApiResponse("Cập nhật avatar thành công", true));
+    }
+
+    // API thêm sản phẩm vào danh sách yêu thích
+    @PostMapping("/favorite/add/{productId}")
+    public ResponseEntity<ApiResponse> addToFavorites(@PathVariable Long productId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName(); // Lấy tên người dùng từ token
+
+        try {
+            favoriteProductService.addProductToFavorites(username, productId);
+            return ResponseEntity.ok(new ApiResponse("Thêm sản phẩm vào danh sách yêu thích thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+    // API xóa sản phẩm khỏi danh sách yêu thích
+    @DeleteMapping("/favorite/remove/{productId}")
+    public ResponseEntity<ApiResponse> removeFromFavorites(@PathVariable Long productId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName(); // Lấy tên người dùng từ token
+
+        try {
+            favoriteProductService.removeProductFromFavorites(username, productId);
+            return ResponseEntity.ok(new ApiResponse("Xóa sản phẩm khỏi danh sách yêu thích thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+    // API lấy danh sách các sản phẩm yêu thích
+    @GetMapping("/favorite")
+    public ResponseEntity<ApiResponse> getFavoriteProducts() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName(); // Lấy tên người dùng từ token
+
+        try {
+            // Lấy danh sách các sản phẩm yêu thích theo ID
+            List<Long> favoriteProductIds = favoriteProductService.getFavoriteProductIds(username);
+            return ResponseEntity.ok(new ApiResponse("Danh sách sản phẩm yêu thích", true, favoriteProductIds));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
 }

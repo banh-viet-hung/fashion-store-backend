@@ -47,14 +47,18 @@ public class Endpoints {
             "/user/info", // Thông tin người dùng (chỉ cho phép người dùng tự xem)
             "/order", // Danh sách đơn hàng của user
             "/address", // Danh sách địa chỉ của user
-            "user/avatar-and-fullname" // Lấy avatar của người dùng
+            "user/avatar-and-fullname",// Lấy avatar của người dùng
+            "/user/favorite", // Danh sách sản phẩm yêu thích
     };
 
     public static final String[] USER_POST_ENDPOINS = {
             "/feedback", // Người dùng có thể gửi phản hồi
             "/user/update", // Cập nhật thông tin người dùng
             "/user/change-password", // Đổi mật khẩu
-            "/address" // Thêm mới hoặc cập nhật địa chỉ
+            "/address",  // Thêm mới hoặc cập nhật địa chỉ
+            "/user/update-avatar",
+            "user/favorite/add/**",
+            "user/favorite/remove/**"
     };
 
     // Các endpoint dành cho Admin
@@ -70,7 +74,7 @@ public class Endpoints {
             "/product",
             "/product/**", // Quản lý sản phẩm
             "/order" ,// Quản lý đơn hàng,
-            "address",
+            "address"
     };
 
     public static final String[] ADMIN_POST_ENDPOINS = {
@@ -87,7 +91,8 @@ public class Endpoints {
             "/role",
             "/shippingMethod",
             "/size",
-            "/user/**" // Quản lý thông tin người dùng
+            "/user/**", // Quản lý thông tin người dùng
+            "/user/favourite/add",
     };
 
     // Các endpoint dành cho Staff

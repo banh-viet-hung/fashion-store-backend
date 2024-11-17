@@ -11,12 +11,6 @@ public class FavoriteProduct {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Size sản phẩm
-    private String size;
-
-    // Màu sản phẩm
-    private String color;
-
     // Quan hệ n-1 với User
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private User user;

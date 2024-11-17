@@ -22,8 +22,7 @@ public class User {
     private String email;
     private String password;
 
-    // Gán avatar mặc định
-    private String avatar = "https://res.cloudinary.com/doo4qviqi/image/upload/v1730703669/defaultavatar_uhpwxn.png";
+    private String avatar;
 
     private String resetToken;
     private LocalDateTime resetTokenExpiration;

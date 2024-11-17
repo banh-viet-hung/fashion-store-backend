@@ -1,5 +1,6 @@
 package com.fashionstore.fashion_store_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -13,17 +14,12 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("id")
     private Long id;
 
     private String name;
-
-    // giá niêm yết
     private double price;
-
-    // giá thực tế
     private double salePrice;
-
-    // Đánh giá trung bình
     private double averageRating;
 
     @Lob
@@ -32,33 +28,25 @@ public class Product {
 
     private int quantity;
 
-    // Một sản phẩm có thể có nhiều size
-    // Quan hệ n-n với Size
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
-    @JoinTable(name = "product_size", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
-    private List<Size> sizes;
+    private String brand;
 
-    // Một sản phẩm có thể có nhiều màu
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String detail;
+
+    private LocalDateTime createdAt;
+
     // Quan hệ n-n với Color
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinTable(name = "product_color", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "color_id"))
     private List<Color> colors;
 
-    private String brand;
-
-    // mô tả chi tiết
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String detail;
-
-    // ngày tạo sản phẩm
-    private LocalDateTime createdAt;
-
-    // ngày cập nhật sản phẩm
-    private LocalDateTime updatedAt;
+    // Quan hệ n-n với Size
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinTable(name = "product_size", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
+    private List<Size> sizes;
 
     // Một sản phẩm có thể có nhiều ảnh
-    // Quan hệ 1-n với Image
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Image> images;
 
@@ -67,14 +55,12 @@ public class Product {
     @JoinTable(name = "product_category", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
     private List<Category> categories;
 
-    // Một sản phẩm có nhiều feedback
-    // Quan hệ 1-n với Feedback
+    // Một sản phẩm có thể có nhiều feedback
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Feedback> feedbacks;
 
-    // Danh sách chi tiết đơn hàng
     // Quan hệ 1-n với OrderDetail
-    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<OrderDetail> orderDetails;
 
     // Quan hệ 1-n với FavoriteProduct
@@ -82,7 +68,6 @@ public class Product {
     private List<FavoriteProduct> favoriteProducts;
 
     // Một sản phẩm có thể nằm trong nhiều giỏ hàng
-    // Quan hệ 1-n với CartProduct
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<CartProduct> cartProducts;
 
@@ -91,8 +76,11 @@ public class Product {
     @JoinTable(name = "related_product", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "related_id"))
     private List<Product> relatedProducts;
 
+    // Quan hệ với ProductVariant (mối quan hệ 1-n với ProductVariant)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<ProductVariant> variants;
+
     // Một sản phẩm có nhiều tính năng
-    // Quan hệ n-n với Feature
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinTable(name = "product_feature", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "feature_id"))
     private List<Feature> features;

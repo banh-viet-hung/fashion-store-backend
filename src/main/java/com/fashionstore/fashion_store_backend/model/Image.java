@@ -22,12 +22,6 @@ public class Image {
     // Văn bản thay thế cho ảnh
     private String altText;
 
-    // ngày tạo ảnh
-    private LocalDateTime createdAt;
-
-    // ngày cập nhật ảnh
-    private LocalDateTime updatedAt;
-
     // Quan hệ n-1 với Product
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private Product product;
