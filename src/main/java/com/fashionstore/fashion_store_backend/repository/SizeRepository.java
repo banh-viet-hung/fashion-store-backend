@@ -6,5 +6,5 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 @RepositoryRestResource(collectionResourceRel = "size", path = "size")
 public interface SizeRepository extends JpaRepository<Size, Long> {
-
+    Size findByName(String name);
 }

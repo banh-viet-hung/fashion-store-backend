@@ -34,7 +34,8 @@ public class Endpoints {
             "/size/**",
             "/user/check-email", // Endpoint kiểm tra email
             "/user/request-password-reset", // Endpoint yêu cầu đặt lại mật khẩu
-            "/user/reset-password/**" // Endpoint đặt lại mật khẩu
+            "/user/reset-password/**", // Endpoint đặt lại mật khẩu
+            "/product-variant/quantity/**",
     };
 
     public static final String[] PUBLIC_POST_ENDPOINS = {
@@ -49,6 +50,7 @@ public class Endpoints {
             "/address", // Danh sách địa chỉ của user
             "user/avatar-and-fullname",// Lấy avatar của người dùng
             "/user/favorite", // Danh sách sản phẩm yêu thích
+            "/cart/**"
     };
 
     public static final String[] USER_POST_ENDPOINS = {
@@ -58,7 +60,8 @@ public class Endpoints {
             "/address",  // Thêm mới hoặc cập nhật địa chỉ
             "/user/update-avatar",
             "user/favorite/add/**",
-            "user/favorite/remove/**"
+            "user/favorite/remove/**",
+            "/cart/**"
     };
 
     // Các endpoint dành cho Admin
@@ -74,7 +77,8 @@ public class Endpoints {
             "/product",
             "/product/**", // Quản lý sản phẩm
             "/order" ,// Quản lý đơn hàng,
-            "address"
+            "address",
+            "/cart/**",
     };
 
     public static final String[] ADMIN_POST_ENDPOINS = {
@@ -93,6 +97,7 @@ public class Endpoints {
             "/size",
             "/user/**", // Quản lý thông tin người dùng
             "/user/favourite/add",
+            "/cart/**"
     };
 
     // Các endpoint dành cho Staff

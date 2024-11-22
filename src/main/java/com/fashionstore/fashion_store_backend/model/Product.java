@@ -26,8 +26,6 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private int quantity;
-
     private String brand;
 
     @Lob
@@ -35,6 +33,9 @@ public class Product {
     private String detail;
 
     private LocalDateTime createdAt;
+
+    // quantity: số lượng sản phẩm còn lại
+    private int quantity;
 
     // Quan hệ n-n với Color
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})

@@ -6,4 +6,5 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 @RepositoryRestResource(collectionResourceRel = "color", path = "color")
 public interface ColorRepository extends JpaRepository<Color, Long> {
+    Color findByName(String name);
 }

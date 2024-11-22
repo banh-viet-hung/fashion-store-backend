@@ -19,16 +19,13 @@ public class CartProduct {
     private int quantity;
 
     // Size sản phẩm
-    private String size;
+    private String sizeName;
 
     // Màu sản phẩm
-    private String color;
+    private String colorName;
 
     // Thuộc user nào
     // Quan hệ n-1 với User
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private User user;
-
-    // Giá sản phẩm
-    private double totalPrice;
 }
