@@ -12,7 +12,9 @@ public class ShippingMethod {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long  id;
+
+    private String code;
 
     private String name;
 
@@ -24,4 +26,5 @@ public class ShippingMethod {
     // mappedBy trỏ tới tên biến shippingMethod ở trong class Order
     @OneToMany(mappedBy = "shippingMethod", cascade = CascadeType.ALL)
     private List<Order> order;
+
 }

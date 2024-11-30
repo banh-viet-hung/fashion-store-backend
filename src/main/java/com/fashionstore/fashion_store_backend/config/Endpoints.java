@@ -36,6 +36,7 @@ public class Endpoints {
             "/user/request-password-reset", // Endpoint yêu cầu đặt lại mật khẩu
             "/user/reset-password/**", // Endpoint đặt lại mật khẩu
             "/product-variant/quantity/**",
+            "/orders/create",
     };
 
     public static final String[] PUBLIC_POST_ENDPOINS = {

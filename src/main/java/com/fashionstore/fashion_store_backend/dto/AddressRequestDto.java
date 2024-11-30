@@ -29,6 +29,5 @@ public class AddressRequestDto {
     @NotBlank(message = "Phường/Xã không được để trống")
     private String ward;
 
-    @NotNull(message = "Cần chỉ định địa chỉ mặc định")
     private boolean defaultAddress;
 }

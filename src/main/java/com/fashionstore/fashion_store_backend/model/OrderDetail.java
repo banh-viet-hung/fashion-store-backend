@@ -29,7 +29,4 @@ public class OrderDetail {
     // Quan hệ n-1 với Order
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private Order order;
-
-    // Giá sản phẩm
-    private double totalPrice;
 }

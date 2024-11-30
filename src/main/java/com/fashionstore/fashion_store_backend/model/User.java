@@ -49,4 +49,9 @@ public class User {
 
     @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
     private List<Order> staffOrders;
+
+    // Một người dùng hoặc nhân viên có thể có nhiều chi tiết trạng thái đơn hàng
+    // Quan hệ 1-n với OrderStatusDetail
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<OrderStatusDetail> orderStatusDetails;
 }
