@@ -25,6 +25,9 @@ public class OrderDetail {
     // Màu sản phẩm
     private String color;
 
+    // Giá sản phẩm
+    private double price;
+
     // Thuộc đơn hàng nào
     // Quan hệ n-1 với Order
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})

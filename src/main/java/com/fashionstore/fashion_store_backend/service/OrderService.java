@@ -1,7 +1,6 @@
 package com.fashionstore.fashion_store_backend.service;
 
-import com.fashionstore.fashion_store_backend.dto.CartProductDTO;
-import com.fashionstore.fashion_store_backend.dto.OrderCreateDto;
+import com.fashionstore.fashion_store_backend.dto.*;
 import com.fashionstore.fashion_store_backend.model.*;
 import com.fashionstore.fashion_store_backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -134,6 +134,7 @@ public class OrderService {
             orderDetail.setSize(cartItem.getSize());
             orderDetail.setColor(cartItem.getColor());
             orderDetail.setQuantity(cartItem.getQuantity());
+            orderDetail.setPrice(productVariant.getProduct().getSalePrice() != 0 ? productVariant.getProduct().getSalePrice()*cartItem.getQuantity()  : productVariant.getProduct().getPrice() * cartItem.getQuantity());
             orderDetail.setOrder(order);  // Thiết lập order cho orderDetail
             orderDetails.add(orderDetail);
 
@@ -160,6 +161,7 @@ public class OrderService {
         orderStatusDetail.setOrderStatus(orderStatusRepository.findById("PENDING").orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng không hợp lệ")));
         orderStatusDetail.setUpdateAt(LocalDateTime.now());
         orderStatusDetail.setUser(user);
+        orderStatusDetail.setActive(true);
 
         // Thêm trạng thái đơn hàng vào danh sách
         order.getOrderStatusDetails().add(orderStatusDetail);
@@ -170,6 +172,105 @@ public class OrderService {
         return order.getId();
     }
 
+    public List<OrderResponseDto> getOrdersByUsername(String username) {
+        // Lấy danh sách đơn hàng của người dùng từ repository
+        List<Order> orders = orderRepository.findByUser_Email(username); // Giả sử đã có phương thức này trong OrderRepository
+
+        // Chuyển đổi các đơn hàng thành DTO và lấy trạng thái hiện tại của mỗi đơn hàng
+        return orders.stream().map(order -> {
+            // Lấy trạng thái hiện tại của đơn hàng
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
+                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+
+            String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
+
+            // Trả về DTO
+            return new OrderResponseDto(order.getId(), order.getOrderDate(), order.getTotal(), currentStatus);
+        }).collect(Collectors.toList());
+    }
+
+    public OrderDetailResponseDto getOrderById(Long orderId, String username) {
+        // Lấy thông tin đơn hàng từ cơ sở dữ liệu
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new RuntimeException("Order not found");
+        }
+        Order order = orderOpt.get();
+
+        // Kiểm tra quyền sở hữu đơn hàng
+        if (!order.getUser().getEmail().equals(username)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        // Lấy thông tin chi tiết đơn hàng
+        List<OrderItemResponseDto> orderItems = new ArrayList<>();
+        double subTotal = 0;
+
+        for (OrderDetail detail : order.getOrderDetails()) {
+            OrderItemResponseDto itemDto = new OrderItemResponseDto();
+            itemDto.setProductId(detail.getProduct().getId());
+            itemDto.setSize(detail.getSize());
+            itemDto.setColor(detail.getColor());
+            itemDto.setQuantity(detail.getQuantity());
+            itemDto.setPrice(detail.getPrice());
+            orderItems.add(itemDto);
+            subTotal += detail.getPrice();
+        }
+
+        // Lấy thông tin về phí ship
+        double shippingFee = order.getShippingMethod().getFee();
+
+        // Lấy thông tin về giảm giá
+        double discount = order.getDiscount();
+
+        // Tính tổng tiền
+        double total = subTotal + shippingFee - discount;
+
+        // Tạo OrderPriceDto
+        OrderPriceResponseDto priceDetails = new OrderPriceResponseDto();
+        priceDetails.setSubTotal(subTotal);
+        priceDetails.setShipping(shippingFee);
+        priceDetails.setDiscount(discount);
+        priceDetails.setTotal(total);
+
+        // Lấy thông tin địa chỉ giao hàng
+        AddressResponseDto addressDto = new AddressResponseDto();
+        Address address = order.getShippingAddress();
+        addressDto.setFullName(address.getFullName());
+        addressDto.setPhoneNumber(address.getPhoneNumber());
+        addressDto.setAddress(address.getAddress());
+        addressDto.setCity(address.getCity());
+        addressDto.setDistrict(address.getDistrict());
+        addressDto.setWard(address.getWard());
+
+        // Lấy thông tin trạng thái đơn hàng
+        List<OrderStatusResponseDto> statusDetails = new ArrayList<>();
+        for (OrderStatusDetail statusDetail : order.getOrderStatusDetails()) {
+            OrderStatusResponseDto statusDto = new OrderStatusResponseDto();
+            statusDto.setStatusName(statusDetail.getOrderStatus().getStatusName());
+            statusDto.setDescription(statusDetail.getOrderStatus().getDescription());
+            statusDto.setUpdateAt(statusDetail.getUpdateAt());
+
+            // Kiểm tra xem user có null không
+            if (statusDetail.getUser() != null && statusDetail.getUser().getRole() != null) {
+                statusDto.setUpdatedBy(statusDetail.getUser().getRole().getName());
+            } else {
+                // Nếu User hoặc Role là null, có thể gán giá trị mặc định hoặc bỏ qua
+                statusDto.setUpdatedBy("USER");
+            }
+
+            statusDetails.add(statusDto);
+        }
+
+
+        // Tạo và trả về OrderResponseDto
+        OrderDetailResponseDto responseDto = new OrderDetailResponseDto();
+        responseDto.setItems(orderItems);
+        responseDto.setPriceDetails(priceDetails);
+        responseDto.setShippingAddress(addressDto);
+        responseDto.setOrderStatusDetails(statusDetails);
+        return responseDto;
+    }
 
 }
 

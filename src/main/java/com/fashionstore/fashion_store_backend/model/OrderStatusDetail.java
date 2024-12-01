@@ -30,4 +30,7 @@ public class OrderStatusDetail {
     // Quan hệ n-1 với User
     @ManyToOne
     private User user;
+
+    // Trạng thái đang hoạt động hay không
+    private boolean isActive;
 }

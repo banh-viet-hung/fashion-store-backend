@@ -22,6 +22,9 @@ public class Order {
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     private Address shippingAddress;
 
+    // discount
+    private double discount;
+
     // Tổng tiền
     private double total;
 
