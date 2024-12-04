@@ -47,8 +47,8 @@ public class SecurityConfig {
         http.cors(cors -> {
                     cors.configurationSource(request -> {
                         CorsConfiguration corsConfig = new CorsConfiguration();
-                        corsConfig.addAllowedOrigin(Endpoints.front_end_host);
-                        corsConfig.addAllowedOrigin(Endpoints.front_end_host_admin);
+                        corsConfig.addAllowedOrigin("http://localhost:3000");
+                        corsConfig.addAllowedOrigin("http://localhost:5173");
                         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
                         corsConfig.addAllowedHeader("*");
                         return corsConfig;
@@ -56,24 +56,27 @@ public class SecurityConfig {
                 })
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
+                        // Công khai
+                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.PUBLIC_API_GET).permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.PUBLIC_API_POST).permitAll()
 
-                        // Endpoint dành cho ADMIN
-                        .requestMatchers(HttpMethod.GET, Endpoints.ADMIN_GET_ENDPOINS).hasAnyAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, Endpoints.ADMIN_POST_ENDPOINS).hasAnyAuthority("ADMIN")
+                        // User
+                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.USER_API_GET)
+                        .hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.USER_API_POST)
+                        .hasAnyAuthority("USER", "ADMIN")
 
+                        // Admin
+                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.ADMIN_API_GET)
+                        .hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.ADMIN_API_POST)
+                        .hasAuthority("ADMIN")
 
-                        // Endpoint dành cho STAFF
-                        .requestMatchers(HttpMethod.GET, Endpoints.STAFF_GET_ENDPOINS).hasAnyAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, Endpoints.STAFF_POST_ENDPOINS).hasAnyAuthority("STAFF")
-
-
-                        // Endpoint dành cho USER
-                        .requestMatchers(HttpMethod.GET, Endpoints.USER_GET_ENDPOINS).hasAnyAuthority("USER", "ADMIN") // USER và ADMIN có thể GET
-                        .requestMatchers(HttpMethod.POST, Endpoints.USER_POST_ENDPOINS).hasAnyAuthority("USER", "ADMIN") // USER và ADMIN có thể POST
-
-                        // Các endpoint công khai
-                        .requestMatchers(Endpoints.PUBLIC_GET_ENDPOINS).permitAll()
-                        .requestMatchers(Endpoints.PUBLIC_POST_ENDPOINS).permitAll()
+                        // Staff
+                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.STAFF_API_GET)
+                        .hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.STAFF_API_POST)
+                        .hasAuthority("STAFF")
 
                         // Các yêu cầu khác yêu cầu xác thực
                         .anyRequest().authenticated()
