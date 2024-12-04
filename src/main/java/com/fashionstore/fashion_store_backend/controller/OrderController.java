@@ -88,4 +88,21 @@ public class OrderController {
         }
     }
 
+    // API để tạo trạng thái chi tiết đơn hàng mới
+    @PostMapping("/{orderId}/update-status")
+    public ResponseEntity<ApiResponse> updateOrderStatus(@PathVariable Long orderId,
+                                                         @RequestParam String statusCode) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication != null ? authentication.getName() : null;
+
+        try {
+            orderService.updateOrderStatus(orderId, statusCode, username);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Trạng thái chi tiết đơn hàng đã được cập nhật thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
 }

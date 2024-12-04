@@ -80,12 +80,10 @@ public class OrderService {
         });
 
         // Lấy phương thức vận chuyển
-        ShippingMethod shippingMethod = shippingMethodRepository.findByCode(orderCreateDto.getShipping().getCode())
-                .orElseThrow(() -> new RuntimeException("Phương thức vận chuyển không hợp lệ"));
+        ShippingMethod shippingMethod = shippingMethodRepository.findByCode(orderCreateDto.getShipping().getCode()).orElseThrow(() -> new RuntimeException("Phương thức vận chuyển không hợp lệ"));
 
         // Lấy phương thức thanh toán
-        PaymentMethod paymentMethod = paymentMethodRepository.findByCode(orderCreateDto.getPayment())
-                .orElseThrow(() -> new RuntimeException("Phương thức thanh toán không hợp lệ"));
+        PaymentMethod paymentMethod = paymentMethodRepository.findByCode(orderCreateDto.getPayment()).orElseThrow(() -> new RuntimeException("Phương thức thanh toán không hợp lệ"));
 
         // Tạo đơn hàng trước khi thêm OrderDetail vào
         Order order = new Order();
@@ -138,7 +136,7 @@ public class OrderService {
             orderDetail.setSize(cartItem.getSize());
             orderDetail.setColor(cartItem.getColor());
             orderDetail.setQuantity(cartItem.getQuantity());
-            orderDetail.setPrice(productVariant.getProduct().getSalePrice() != 0 ? productVariant.getProduct().getSalePrice()*cartItem.getQuantity()  : productVariant.getProduct().getPrice() * cartItem.getQuantity());
+            orderDetail.setPrice(productVariant.getProduct().getSalePrice() != 0 ? productVariant.getProduct().getSalePrice() * cartItem.getQuantity() : productVariant.getProduct().getPrice() * cartItem.getQuantity());
             orderDetail.setOrder(order);  // Thiết lập order cho orderDetail
             orderDetails.add(orderDetail);
 
@@ -183,8 +181,7 @@ public class OrderService {
         // Chuyển đổi các đơn hàng thành DTO và lấy trạng thái hiện tại của mỗi đơn hàng
         return orders.stream().map(order -> {
             // Lấy trạng thái hiện tại của đơn hàng
-            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
-                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
 
             String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
 
@@ -294,14 +291,44 @@ public class OrderService {
         // Chuyển đổi thành DTO
         return ordersPage.map(order -> {
             // Lấy trạng thái hiện tại của đơn hàng
-            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
-                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
 
             String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
 
             // Trả về DTO
             return new OrderResponseDto(order.getId(), order.getOrderDate(), order.getTotal(), currentStatus);
         });
+    }
+
+    public void updateOrderStatus(Long orderId, String statusCode, String username) {
+        // Tìm đơn hàng theo ID
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new RuntimeException("Order not found");
+        }
+        Order order = orderOpt.get();
+
+        // Tìm trạng thái mới theo mã trạng thái (statusCode)
+        Optional<OrderStatus> orderStatusOpt = orderStatusRepository.findById(statusCode);
+        if (orderStatusOpt.isEmpty()) {
+            throw new RuntimeException("Invalid order status code");
+        }
+        OrderStatus orderStatus = orderStatusOpt.get();
+
+        // Tắt tất cả các trạng thái đang active của đơn hàng này
+        OrderStatusDetail activeStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
+        activeStatusDetail.setActive(false);
+        orderStatusDetailRepository.save(activeStatusDetail);
+        // Tạo trạng thái chi tiết mới và lưu vào cơ sở dữ liệu
+        OrderStatusDetail newOrderStatusDetail = new OrderStatusDetail();
+        newOrderStatusDetail.setOrder(order);
+        newOrderStatusDetail.setOrderStatus(orderStatus);
+        newOrderStatusDetail.setUpdateAt(LocalDateTime.now());
+        newOrderStatusDetail.setUser(userRepository.findByEmail(username)); // Lấy user thực hiện cập nhật trạng thái
+        newOrderStatusDetail.setActive(true);
+
+        // Lưu trạng thái chi tiết mới vào cơ sở dữ liệu
+        orderStatusDetailRepository.save(newOrderStatusDetail);
     }
 
 
