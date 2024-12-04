@@ -80,10 +80,12 @@ public class OrderService {
         });
 
         // Lấy phương thức vận chuyển
-        ShippingMethod shippingMethod = shippingMethodRepository.findByCode(orderCreateDto.getShipping().getCode()).orElseThrow(() -> new RuntimeException("Phương thức vận chuyển không hợp lệ"));
+        ShippingMethod shippingMethod = shippingMethodRepository.findByCode(orderCreateDto.getShipping().getCode())
+                .orElseThrow(() -> new RuntimeException("Phương thức vận chuyển không hợp lệ"));
 
         // Lấy phương thức thanh toán
-        PaymentMethod paymentMethod = paymentMethodRepository.findByCode(orderCreateDto.getPayment()).orElseThrow(() -> new RuntimeException("Phương thức thanh toán không hợp lệ"));
+        PaymentMethod paymentMethod = paymentMethodRepository.findByCode(orderCreateDto.getPayment())
+                .orElseThrow(() -> new RuntimeException("Phương thức thanh toán không hợp lệ"));
 
         // Tạo đơn hàng trước khi thêm OrderDetail vào
         Order order = new Order();
@@ -181,7 +183,8 @@ public class OrderService {
         // Chuyển đổi các đơn hàng thành DTO và lấy trạng thái hiện tại của mỗi đơn hàng
         return orders.stream().map(order -> {
             // Lấy trạng thái hiện tại của đơn hàng
-            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
+                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
 
             String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
 
@@ -291,7 +294,8 @@ public class OrderService {
         // Chuyển đổi thành DTO
         return ordersPage.map(order -> {
             // Lấy trạng thái hiện tại của đơn hàng
-            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
+                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
 
             String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
 
