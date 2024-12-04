@@ -7,6 +7,7 @@ import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -69,4 +70,22 @@ public class OrderController {
                     .body(new ApiResponse(e.getMessage(), false));
         }
     }
+
+    // Thêm API phân trang vào OrderController
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse> getAllOrdersWithPagination(@RequestParam(defaultValue = "1") int page,
+                                                                  @RequestParam(defaultValue = "10") int size) {
+        try {
+            // Gọi service để lấy danh sách đơn hàng phân trang
+            Page<OrderResponseDto> orderPage = orderService.getAllOrdersWithPagination(page, size);
+
+            // Tạo phản hồi trả về
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Danh sách đơn hàng", true, orderPage));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Lỗi server", false));
+        }
+    }
+
 }

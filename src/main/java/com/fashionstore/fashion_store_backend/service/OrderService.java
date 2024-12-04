@@ -4,6 +4,10 @@ import com.fashionstore.fashion_store_backend.dto.*;
 import com.fashionstore.fashion_store_backend.model.*;
 import com.fashionstore.fashion_store_backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -271,6 +275,28 @@ public class OrderService {
         responseDto.setOrderStatusDetails(statusDetails);
         return responseDto;
     }
+
+    // Thêm phương thức trong OrderService
+    public Page<OrderResponseDto> getAllOrdersWithPagination(int page, int size) {
+        // Tạo Pageable với phân trang và sắp xếp theo ngày tạo đơn hàng
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("orderDate")));
+
+        // Lấy danh sách đơn hàng phân trang
+        Page<Order> ordersPage = orderRepository.findAll(pageable);
+
+        // Chuyển đổi thành DTO
+        return ordersPage.map(order -> {
+            // Lấy trạng thái hiện tại của đơn hàng
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
+                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+
+            String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
+
+            // Trả về DTO
+            return new OrderResponseDto(order.getId(), order.getOrderDate(), order.getTotal(), currentStatus);
+        });
+    }
+
 
 }
 

@@ -56,23 +56,26 @@ public class SecurityConfig {
                 })
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                        // Các endpoint công khai
-                        .requestMatchers(Endpoints.PUBLIC_GET_ENDPOINS).permitAll()
-                        .requestMatchers(Endpoints.PUBLIC_POST_ENDPOINS).permitAll()
-
-                        // Endpoint dành cho USER
-                        .requestMatchers(HttpMethod.GET, Endpoints.USER_GET_ENDPOINS).hasAnyAuthority("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, Endpoints.USER_POST_ENDPOINS).hasAnyAuthority("USER", "ADMIN") // Chỉ cho phép USER và ADMIN
-
-                        // Endpoint dành cho STAFF (không có quyền POST để cập nhật user)
-                        .requestMatchers(HttpMethod.GET, Endpoints.STAFF_GET_ENDPOINS).hasAnyAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, Endpoints.STAFF_POST_ENDPOINS).hasAnyAuthority("STAFF")
 
                         // Endpoint dành cho ADMIN
                         .requestMatchers(HttpMethod.GET, Endpoints.ADMIN_GET_ENDPOINS).hasAnyAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, Endpoints.ADMIN_POST_ENDPOINS).hasAnyAuthority("ADMIN")
 
-                        // Tất cả các yêu cầu khác yêu cầu xác thực
+
+                        // Endpoint dành cho STAFF
+                        .requestMatchers(HttpMethod.GET, Endpoints.STAFF_GET_ENDPOINS).hasAnyAuthority("STAFF")
+                        .requestMatchers(HttpMethod.POST, Endpoints.STAFF_POST_ENDPOINS).hasAnyAuthority("STAFF")
+
+
+                        // Endpoint dành cho USER
+                        .requestMatchers(HttpMethod.GET, Endpoints.USER_GET_ENDPOINS).hasAnyAuthority("USER", "ADMIN") // USER và ADMIN có thể GET
+                        .requestMatchers(HttpMethod.POST, Endpoints.USER_POST_ENDPOINS).hasAnyAuthority("USER", "ADMIN") // USER và ADMIN có thể POST
+
+                        // Các endpoint công khai
+                        .requestMatchers(Endpoints.PUBLIC_GET_ENDPOINS).permitAll()
+                        .requestMatchers(Endpoints.PUBLIC_POST_ENDPOINS).permitAll()
+
+                        // Các yêu cầu khác yêu cầu xác thực
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())
@@ -80,7 +83,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 
     @Bean
     public AuthenticationManager authManager(HttpSecurity http) throws Exception {

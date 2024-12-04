@@ -7,8 +7,6 @@ public class Endpoints {
 
     // Các endpoint công khai
     public static final String[] PUBLIC_GET_ENDPOINS = {
-//            "/address",
-//            "/address/**",
             "/cartProduct",
             "/cartProduct/**",
             "/category",
@@ -37,7 +35,7 @@ public class Endpoints {
             "/user/request-password-reset", // Endpoint yêu cầu đặt lại mật khẩu
             "/user/reset-password/**", // Endpoint đặt lại mật khẩu
             "/product-variant/quantity/**",
-            "/orders/create",
+            "/orders/create", // Endpoint tạo đơn hàng
     };
 
     public static final String[] PUBLIC_POST_ENDPOINS = {
@@ -48,11 +46,12 @@ public class Endpoints {
     // Các endpoint dành cho User
     public static final String[] USER_GET_ENDPOINS = {
             "/user/info", // Thông tin người dùng (chỉ cho phép người dùng tự xem)
-            "/order", // Danh sách đơn hàng của user
             "/address", // Danh sách địa chỉ của user
-            "user/avatar-and-fullname",// Lấy avatar của người dùng
+            "user/avatar-and-fullname", // Lấy avatar của người dùng
             "/user/favorite", // Danh sách sản phẩm yêu thích
-            "/cart/**"
+            "/cart/**",
+            "/orders/list", // Lấy danh sách đơn hàng của người dùng
+            "/orders/{orderId}", // Lấy thông tin chi tiết đơn hàng của người dùng (chỉ cho phép người dùng xem đơn hàng của mình)
     };
 
     public static final String[] USER_POST_ENDPOINS = {
@@ -63,7 +62,8 @@ public class Endpoints {
             "/user/update-avatar",
             "user/favorite/add/**",
             "user/favorite/remove/**",
-            "/cart/**"
+            "/cart/**",
+            "/orders/create", // Người dùng có thể tạo đơn hàng
     };
 
     // Các endpoint dành cho Admin
@@ -78,9 +78,10 @@ public class Endpoints {
             "/feature/**", // Quản lý đặc điểm
             "/product",
             "/product/**", // Quản lý sản phẩm
-            "/order" ,// Quản lý đơn hàng,
-            "address",
+            "/address",
             "/cart/**",
+            "/orders/all", // Admin có thể xem tất cả đơn hàng (phân trang)
+            "/orders/{orderId}", // Admin có thể xem chi tiết đơn hàng của bất kỳ ai
     };
 
     public static final String[] ADMIN_POST_ENDPOINS = {
@@ -91,7 +92,6 @@ public class Endpoints {
             "/feature",
             "/feedback",
             "/image",
-            "/order",
             "/paymentMethod",
             "/product",
             "/role",
@@ -99,12 +99,13 @@ public class Endpoints {
             "/size",
             "/user/**", // Quản lý thông tin người dùng
             "/user/favourite/add",
-            "/cart/**"
+            "/cart/**",
+            "/orders/create", // Admin cũng có thể tạo đơn hàng nếu cần
     };
 
     // Các endpoint dành cho Staff
     public static final String[] STAFF_GET_ENDPOINS = {
-            "/feedback" // Xem phản hồi
+            "/feedback", // Xem phản hồi
     };
 
     public static final String[] STAFF_POST_ENDPOINS = {
