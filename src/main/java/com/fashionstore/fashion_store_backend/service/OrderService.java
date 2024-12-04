@@ -201,9 +201,16 @@ public class OrderService {
         }
         Order order = orderOpt.get();
 
-        // Kiểm tra quyền sở hữu đơn hàng
+        // Kiểm tra quyền sở hữu đơn hàng (chủ sở hữu hoặc ADMIN/STAFF)
         if (!order.getUser().getEmail().equals(username)) {
-            throw new RuntimeException("Unauthorized");
+            System.out.println("Order owner: " + order.getUser().getEmail());
+            User user = userRepository.findByEmail(username);
+            // Nếu không phải chủ sở hữu, kiểm tra vai trò
+            String userRole = user.getRole().getName(); // Giả sử bạn có phương thức để lấy role của user
+            if (!userRole.equals("ADMIN") && !userRole.equals("STAFF")) {
+                System.out.println("User role: " + userRole);
+                throw new RuntimeException("Unauthorized");
+            }
         }
 
         // Lấy thông tin chi tiết đơn hàng

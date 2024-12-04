@@ -53,34 +53,27 @@ public class SecurityConfig {
                         corsConfig.addAllowedHeader("*");
                         return corsConfig;
                     });
-                })
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authz -> authz
-                        // Công khai
+                }).csrf(csrf -> csrf.disable()).authorizeHttpRequests(authz -> authz
+
+                        // 1. Nhóm ADMIN (chỉ dành riêng cho ADMIN)
+                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.ADMIN_API_GET).hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.ADMIN_API_POST).hasAuthority("ADMIN")
+
+                        // 2. Nhóm STAFF, ADMIN (yêu cầu Staff hoặc Admin)
+                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.STAFF_ADMIN_API_GET).hasAnyAuthority("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.STAFF_ADMIN_API_POST).hasAnyAuthority("STAFF", "ADMIN")
+
+                        // 3. Nhóm ADMIN, STAFF, USER (yêu cầu ít nhất một trong các quyền ADMIN, STAFF, USER)
+                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.ADMIN_STAFF_USER_API_GET).hasAnyAuthority("USER", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.ADMIN_STAFF_USER_API_POST).hasAnyAuthority("USER", "STAFF", "ADMIN")
+
+                        // 4. Nhóm public (không yêu cầu xác thực)
                         .requestMatchers(HttpMethod.GET, ApiAccessConfig.PUBLIC_API_GET).permitAll()
                         .requestMatchers(HttpMethod.POST, ApiAccessConfig.PUBLIC_API_POST).permitAll()
 
-                        // User
-                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.USER_API_GET)
-                        .hasAnyAuthority("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.USER_API_POST)
-                        .hasAnyAuthority("USER", "ADMIN")
-
-                        // Admin
-                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.ADMIN_API_GET)
-                        .hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.ADMIN_API_POST)
-                        .hasAuthority("ADMIN")
-
-                        // Staff
-                        .requestMatchers(HttpMethod.GET, ApiAccessConfig.STAFF_API_GET)
-                        .hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, ApiAccessConfig.STAFF_API_POST)
-                        .hasAuthority("STAFF")
-
                         // Các yêu cầu khác yêu cầu xác thực
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
+
                 .httpBasic(Customizer.withDefaults())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
