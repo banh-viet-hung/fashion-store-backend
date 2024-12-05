@@ -1,8 +1,11 @@
 package com.fashionstore.fashion_store_backend.controller;
 
+import com.fashionstore.fashion_store_backend.dto.ProductVariantsCreateRequestDto;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.ProductVariantService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,5 +31,20 @@ public class ProductVariantController {
             return ResponseEntity.ok(new ApiResponse("Không tìm thấy sản phẩm với các điều kiện này", true, quantity));
         }
         return ResponseEntity.ok(new ApiResponse("Số lượng sản phẩm", true, quantity));
+    }
+
+    // API tạo mới ProductVariant cho sản phẩm
+    @PostMapping("/{productId}/variants")
+    public ResponseEntity<ApiResponse> createProductVariants(
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductVariantsCreateRequestDto requestDto) {
+        try {
+            requestDto.setProductId(productId);
+            // Gọi service để tạo ProductVariants
+            productVariantService.createProductVariants(requestDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Tạo ProductVariant thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
     }
 }
