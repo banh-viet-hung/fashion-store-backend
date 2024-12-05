@@ -58,18 +58,26 @@ public class SecurityConfig {
                         // 1. Nhóm ADMIN (chỉ dành riêng cho ADMIN)
                         .requestMatchers(HttpMethod.GET, ApiAccessConfig.ADMIN_API_GET).hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, ApiAccessConfig.ADMIN_API_POST).hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, ApiAccessConfig.ADMIN_API_POST).hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ApiAccessConfig.ADMIN_API_POST).hasAuthority("ADMIN")
 
                         // 2. Nhóm STAFF, ADMIN (yêu cầu Staff hoặc Admin)
                         .requestMatchers(HttpMethod.GET, ApiAccessConfig.STAFF_ADMIN_API_GET).hasAnyAuthority("STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.POST, ApiAccessConfig.STAFF_ADMIN_API_POST).hasAnyAuthority("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, ApiAccessConfig.STAFF_ADMIN_API_POST).hasAnyAuthority("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ApiAccessConfig.STAFF_ADMIN_API_POST).hasAnyAuthority("STAFF", "ADMIN")
 
                         // 3. Nhóm ADMIN, STAFF, USER (yêu cầu ít nhất một trong các quyền ADMIN, STAFF, USER)
                         .requestMatchers(HttpMethod.GET, ApiAccessConfig.ADMIN_STAFF_USER_API_GET).hasAnyAuthority("USER", "STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.POST, ApiAccessConfig.ADMIN_STAFF_USER_API_POST).hasAnyAuthority("USER", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, ApiAccessConfig.ADMIN_STAFF_USER_API_POST).hasAnyAuthority("USER", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ApiAccessConfig.ADMIN_STAFF_USER_API_POST).hasAnyAuthority("USER", "STAFF", "ADMIN")
 
                         // 4. Nhóm public (không yêu cầu xác thực)
                         .requestMatchers(HttpMethod.GET, ApiAccessConfig.PUBLIC_API_GET).permitAll()
                         .requestMatchers(HttpMethod.POST, ApiAccessConfig.PUBLIC_API_POST).permitAll()
+                        .requestMatchers(HttpMethod.PUT, ApiAccessConfig.PUBLIC_API_POST).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, ApiAccessConfig.PUBLIC_API_POST).permitAll()
 
                         // Các yêu cầu khác yêu cầu xác thực
                         .anyRequest().authenticated())

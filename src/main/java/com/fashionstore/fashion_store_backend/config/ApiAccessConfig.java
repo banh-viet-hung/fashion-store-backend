@@ -17,7 +17,7 @@ public class ApiAccessConfig {
 
     public static final String[] STAFF_ADMIN_API_POST = {"/orders/{orderId}/update-status"};
 
-    public static final String[] ADMIN_API_GET = {"/null"};
+    public static final String[] ADMIN_API_GET = {"/user/all", "/user/info/{username}"};
 
-    public static final String[] ADMIN_API_POST = { "/null"};
+    public static final String[] ADMIN_API_POST = { "/user/update-role/{username}"};
 }

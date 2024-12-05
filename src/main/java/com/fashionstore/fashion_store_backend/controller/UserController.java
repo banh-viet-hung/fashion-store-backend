@@ -7,10 +7,12 @@ import com.fashionstore.fashion_store_backend.service.FavoriteProductService;
 import com.fashionstore.fashion_store_backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -177,4 +179,50 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse> getAllUsersWithPagination(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        try {
+            Page<UserResponseDto> userPage = userService.getAllUsersWithPagination(page, size);
+
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Danh sách người dùng", true, userPage));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Lỗi server", false));
+        }
+    }
+
+    // API lấy thông tin người dùng theo username
+    @GetMapping("/info/{username}")
+    public ResponseEntity<ApiResponse> getUserInfoByUsername(@PathVariable String username) {
+        try {
+            UserResponseDto userResponseDto = userService.getUserInfoByUsername(username);
+            return ResponseEntity.ok(new ApiResponse("Thông tin người dùng", true, userResponseDto));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Người dùng không tồn tại", false));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+    @PutMapping("/update-role/{username}")
+    public ResponseEntity<ApiResponse> updateUserRole(@PathVariable String username, @RequestBody Map<String, String> request) {
+        String roleName = request.get("role");
+
+        if (roleName == null || roleName.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ApiResponse("Tên quyền không được để trống", false));
+        }
+
+        try {
+            userService.updateUserRole(username, roleName);
+            return ResponseEntity.ok(new ApiResponse("Cập nhật quyền cho người dùng thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
 }

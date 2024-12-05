@@ -7,6 +7,9 @@ import com.fashionstore.fashion_store_backend.model.User;
 import com.fashionstore.fashion_store_backend.repository.RoleRepository;
 import com.fashionstore.fashion_store_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -75,12 +78,7 @@ public class UserService {
             throw new UsernameNotFoundException("Người dùng không tồn tại");
         }
 
-        return new UserInfoDto(
-                user.getFullName(),
-                user.getPhoneNumber(),
-                user.getGender(),
-                user.getDateOfBirth()
-        );
+        return new UserInfoDto(user.getFullName(), user.getPhoneNumber(), user.getGender(), user.getDateOfBirth());
     }
 
     public void updateUserInfo(String username, UserUpdateDto userUpdateDto) {
@@ -135,6 +133,45 @@ public class UserService {
         }
 
         user.setAvatar(avatarUrl);
+        userRepository.save(user);
+    }
+
+    public Page<UserResponseDto> getAllUsersWithPagination(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size); // Cấu hình phân trang
+
+        Page<User> userPage = userRepository.findAll(pageable); // Lấy danh sách người dùng phân trang
+
+        return userPage.map(user -> {
+            // Chuyển đổi User thành UserResponseDto
+            return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật");
+        });
+    }
+
+    public UserResponseDto getUserInfoByUsername(String username) {
+        User user = userRepository.findByEmail(username);  // Hoặc dùng findByUsername nếu có cột username
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+
+        // Chuyển đổi đối tượng User thành UserResponseDto
+        return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật");
+    }
+
+    public void updateUserRole(String username, String roleName) {
+        // Tìm người dùng theo email (hoặc username nếu có cột username)
+        User user = userRepository.findByEmail(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+
+        // Tìm role từ database
+        Role role = roleRepository.findByName(roleName);
+        if (role == null) {
+            throw new RuntimeException("Quyền không hợp lệ");
+        }
+
+        // Cập nhật role cho người dùng
+        user.setRole(role);
         userRepository.save(user);
     }
 
