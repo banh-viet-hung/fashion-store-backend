@@ -48,4 +48,15 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
+
+    @DeleteMapping("/delete/{productId}")
+    public ResponseEntity<ApiResponse> softDeleteProduct(@PathVariable Long productId) {
+        try {
+            productService.softDeleteProduct(productId);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Xóa sản phẩm thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
 }

@@ -37,6 +37,9 @@ public class Product {
     // quantity: số lượng sản phẩm còn lại
     private int quantity;
 
+    // Đã xóa
+    private boolean deleted;
+
     // Quan hệ n-n với Color
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinTable(name = "product_color", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "color_id"))
