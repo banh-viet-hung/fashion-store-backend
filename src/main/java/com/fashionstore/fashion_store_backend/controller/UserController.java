@@ -35,8 +35,8 @@ public class UserController {
             return ResponseEntity.badRequest().body(new ApiResponse("Mật khẩu và xác nhận mật khẩu không khớp", false));
         }
 
-        User newUser = userService.registerUser(registrationDto);
-        ApiResponse response = new ApiResponse("Đăng ký thành công", true, newUser);
+        userService.registerUser(registrationDto);
+        ApiResponse response = new ApiResponse("Đăng ký thành công", true, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
