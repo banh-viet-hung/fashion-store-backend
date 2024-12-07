@@ -98,10 +98,15 @@ public class OrderService {
         order.setTotal(0);  // Tạm thời đặt tổng là 0
         order.setOrderDetails(new ArrayList<>()); // Khởi tạo danh sách OrderDetails
 
+        // Danh sách lưu trữ các sản phẩm và biến động số lượng
+        List<CartProductDTO> cart = orderCreateDto.getCart();
+        List<ProductVariant> productVariantsToUpdate = new ArrayList<>();
+        List<Product> productsToUpdate = new ArrayList<>();
+
         // Kiểm tra số lượng sản phẩm trong giỏ hàng và tính tổng tiền
         double total = 0;
         List<OrderDetail> orderDetails = order.getOrderDetails();
-        for (CartProductDTO cartItem : orderCreateDto.getCart()) {
+        for (CartProductDTO cartItem : cart) {
             // Lấy color và size của từng sản phẩm trong giỏ hàng
             Color color = null;
             Size size = null;
@@ -124,14 +129,12 @@ public class OrderService {
                 throw new RuntimeException("Có lỗi xảy ra liên quan đến số lượng sản phẩm, vui lòng kiểm tra lại tại trang giỏ hàng");
             }
 
-            // Giảm số lượng trong ProductVariant
-            productVariant.setQuantity(productVariant.getQuantity() - cartItem.getQuantity());
-            productVariantRepository.save(productVariant);
+            // Lưu các sản phẩm và biến động số lượng để cập nhật sau
+            productVariantsToUpdate.add(productVariant);
 
-            // Cập nhật tổng số lượng sản phẩm trong bảng Product
+            // Giảm tổng số lượng của sản phẩm trong giỏ hàng
             Product product = productVariant.getProduct();
-            product.setQuantity(product.getQuantity() - cartItem.getQuantity());
-            productRepository.save(product);
+            productsToUpdate.add(product);
 
             OrderDetail orderDetail = new OrderDetail();
             orderDetail.setProduct(productVariant.getProduct());
@@ -172,6 +175,23 @@ public class OrderService {
 
         // Lưu OrderStatusDetail vào bảng OrderStatusDetail
         orderStatusDetailRepository.save(orderStatusDetail);
+
+        // Sau khi đơn hàng đã được lưu, cập nhật số lượng sản phẩm
+        for (ProductVariant productVariant : productVariantsToUpdate) {
+            productVariant.setQuantity(productVariant.getQuantity() - cart.stream()
+                    .filter(item -> item.getProductId().equals(productVariant.getProduct().getId()))
+                    .mapToInt(CartProductDTO::getQuantity)
+                    .sum());
+            productVariantRepository.save(productVariant);
+        }
+
+        for (Product product : productsToUpdate) {
+            product.setQuantity(product.getQuantity() - cart.stream()
+                    .filter(item -> item.getProductId().equals(product.getId()))
+                    .mapToInt(CartProductDTO::getQuantity)
+                    .sum());
+            productRepository.save(product);
+        }
 
         return order.getId();
     }
