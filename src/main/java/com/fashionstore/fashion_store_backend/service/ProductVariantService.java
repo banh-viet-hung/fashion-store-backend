@@ -12,6 +12,8 @@ import com.fashionstore.fashion_store_backend.repository.SizeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ProductVariantService {
 
@@ -78,4 +80,42 @@ public class ProductVariantService {
         // Lưu sản phẩm với số lượng mới
         productRepository.save(product);
     }
+
+    public void updateProductVariants(ProductVariantsCreateRequestDto requestDto) throws Exception {
+        Product product = productRepository.findById(requestDto.getProductId())
+                .orElseThrow(() -> new Exception("Sản phẩm không tồn tại"));
+
+        // Xóa toàn bộ ProductVariant cũ của sản phẩm này
+        List<ProductVariant> existingVariants = productVariantRepository.findByProduct(product);
+        productVariantRepository.deleteAll(existingVariants);
+
+        int totalQuantity = 0; // Biến để cộng dồn số lượng
+
+        // Duyệt qua các variant mới và tạo mới
+        for (var variantDto : requestDto.getVariants()) {
+            // Tìm màu và kích thước từ tên
+            Color color = colorRepository.findByName(variantDto.getColorName());
+            Size size = sizeRepository.findByName(variantDto.getSizeName());
+
+            // Tạo mới ProductVariant
+            ProductVariant productVariant = new ProductVariant();
+            productVariant.setProduct(product);
+            productVariant.setColor(color);
+            productVariant.setSize(size);
+            productVariant.setQuantity(variantDto.getQuantity());
+
+            // Cộng dồn số lượng vào tổng số lượng của sản phẩm
+            totalQuantity += variantDto.getQuantity();
+
+            // Lưu vào cơ sở dữ liệu
+            productVariantRepository.save(productVariant);
+        }
+
+        // Cập nhật lại quantity của sản phẩm
+        product.setQuantity(totalQuantity);
+
+        // Lưu sản phẩm với số lượng mới
+        productRepository.save(product);
+    }
+
 }

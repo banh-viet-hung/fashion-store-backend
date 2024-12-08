@@ -47,4 +47,19 @@ public class ProductVariantController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
+
+    @PutMapping("/{productId}/variants")
+    public ResponseEntity<ApiResponse> updateProductVariants(
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductVariantsCreateRequestDto requestDto) {
+        try {
+            requestDto.setProductId(productId);
+            // Gọi service để cập nhật lại ProductVariants
+            productVariantService.updateProductVariants(requestDto);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Cập nhật ProductVariant thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
 }
