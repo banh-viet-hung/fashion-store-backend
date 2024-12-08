@@ -1,8 +1,10 @@
 package com.fashionstore.fashion_store_backend.service;
 
+import com.fashionstore.fashion_store_backend.exception.InvalidLoginException;
 import com.fashionstore.fashion_store_backend.model.User;
 import com.fashionstore.fashion_store_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,7 +24,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with email: " + email);
+            throw new InvalidLoginException("Email không tồn tại.");
+        }
+
+        // Kiểm tra tài khoản có đang hoạt động không
+        if (!user.isActive()) {
+            throw new LockedException("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên để biết thêm chi tiết!");
         }
 
         // Lấy vai trò từ User và tạo danh sách GrantedAuthority
@@ -30,7 +37,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         return org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
                 .password(user.getPassword())
-                .authorities(authority) // Sử dụng authority duy nhất
+                .authorities(authority)
                 .build();
     }
+
 }

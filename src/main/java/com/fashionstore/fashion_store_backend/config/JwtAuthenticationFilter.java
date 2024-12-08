@@ -1,15 +1,18 @@
 package com.fashionstore.fashion_store_backend.config;
 
+import com.fashionstore.fashion_store_backend.exception.InvalidLoginException;
 import com.fashionstore.fashion_store_backend.exception.TokenInvalidException;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.UserDetailsServiceImpl;
 import com.fashionstore.fashion_store_backend.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -48,8 +51,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean processToken(String jwt, HttpServletResponse response) throws IOException {
         try {
             String username = jwtUtil.extractUsername(jwt);
+            UserDetails userDetails = null;
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                try {
+                    userDetails = userDetailsService.loadUserByUsername(username);
+                } catch (InvalidLoginException | LockedException e) {
+                    // Set HTTP response status and content type
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+
+                    // Tạo đối tượng ApiResponse với thông điệp lỗi từ exception
+                    ApiResponse apiResponse = new ApiResponse(e.getMessage(), false);
+
+                    // Viết phản hồi dưới dạng JSON
+                    response.getWriter().write(new ObjectMapper().writeValueAsString(apiResponse));
+
+                    // Trả về false để dừng tiếp tục xử lý
+                    return false;
+                }
                 if (userDetails != null && jwtUtil.validateToken(jwt, username)) {
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
@@ -60,7 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return false; // Token không hợp lệ
         } catch (TokenInvalidException ex) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
+            response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write(new ObjectMapper().writeValueAsString(new ApiResponse(ex.getMessage(), false)));
             return false; // Đã xử lý lỗi, trả về false
         }

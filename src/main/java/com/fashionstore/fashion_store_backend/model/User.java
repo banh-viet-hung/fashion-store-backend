@@ -27,6 +27,8 @@ public class User {
     private String resetToken;
     private LocalDateTime resetTokenExpiration;
 
+    private boolean isActive = true; // Mặc định là hoạt động
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Address> addresses;
 
