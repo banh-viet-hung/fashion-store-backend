@@ -3,7 +3,7 @@ package com.fashionstore.fashion_store_backend.config;
 public class ApiAccessConfig {
 
     // Các API công khai (không cần xác thực)
-    public static final String[] PUBLIC_API_GET = {"/cartProduct", "/cartProduct/**", "/category", "/category/**", "/color", "/color/**", "/favoriteProduct", "/favoriteProduct/**", "/feature", "/feature/**", "/feedback", "/feedback/**", "/image", "/image/**", "/paymentMethod", "/paymentMethod/**", "/product", "/product/**", "/role", "/role/**", "/shippingMethod", "/shippingMethod/**", "/size", "/size/**", "/user/check-email", "/user/request-password-reset", "/user/reset-password/**", "/product-variant/quantity/**", "/products/{productId}"};
+    public static final String[] PUBLIC_API_GET = {"/cartProduct", "/cartProduct/**", "/category", "/category/**", "/color", "/color/**", "/favoriteProduct", "/favoriteProduct/**", "/feature", "/feature/**", "/feedback", "/feedback/**", "/image", "/image/**", "/paymentMethod", "/paymentMethod/**", "/product", "/product/**", "/role", "/role/**", "/shippingMethod", "/shippingMethod/**", "/size", "/size/**", "/user/check-email", "/user/request-password-reset", "/user/reset-password/**", "/product-variant/quantity/**", "/products/{productId}", "/user/check-status"};
 
     public static final String[] PUBLIC_API_POST = {"/user/register", "/api/auth/login", "orders/create"};
 
@@ -19,5 +19,5 @@ public class ApiAccessConfig {
 
     public static final String[] ADMIN_API_GET = {"/user/all", "/user/info/{username}"};
 
-    public static final String[] ADMIN_API_POST = { "/user/update-role/{username}"};
+    public static final String[] ADMIN_API_POST = { "/user/update-role/{username}", "/user/change-status/{username}"};
 }

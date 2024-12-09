@@ -24,7 +24,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new InvalidLoginException("Email không tồn tại.");
+            throw new InvalidLoginException("Email không tồn tại. Vui lòng kiểm tra lại!");
         }
 
         // Kiểm tra tài khoản có đang hoạt động không

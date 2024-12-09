@@ -225,4 +225,29 @@ public class UserController {
         }
     }
 
+    @PutMapping("/change-status/{username}")
+    public ResponseEntity<ApiResponse> changeUserStatus(@PathVariable String username) {
+        try {
+            // Gọi service để thay đổi trạng thái người dùng
+            boolean isActive = userService.toggleUserStatus(username);
+
+            String statusMessage = isActive ? "Đã mở khóa tài khoản người dùng" : "Đã khóa tài khoản người dùng";
+
+            return ResponseEntity.ok(new ApiResponse(statusMessage, true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+    @GetMapping("/check-status")
+    public ResponseEntity<ApiResponse> checkUserStatus(@RequestParam String username) {
+        // Kiểm tra trạng thái tài khoản của người dùng dựa trên username
+        System.out.println("username: " + username);
+        boolean isActive = userService.isUserActive(username);
+        String message = isActive ? "Tài khoản đang hoạt động" : "Tài khoản đã bị khóa! Vui lòng liên hệ quản trị viên để biết thêm chi tiết!";
+
+        return ResponseEntity.ok(new ApiResponse(message, isActive));
+    }
+
+
 }

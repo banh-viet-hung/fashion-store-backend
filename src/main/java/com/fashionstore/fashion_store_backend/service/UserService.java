@@ -43,6 +43,7 @@ public class UserService {
         user.setFullName(registrationDto.getFullName());
         user.setEmail(registrationDto.getEmail());
         user.setPassword(passwordEncoder.encode(registrationDto.getPassword()));
+        user.setActive(true);
 
         // Lấy role USER từ database và gán cho người dùng
         Role userRole = roleRepository.findByName("USER");
@@ -144,7 +145,7 @@ public class UserService {
 
         return userPage.map(user -> {
             // Chuyển đổi User thành UserResponseDto
-            return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật");
+            return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật", user.isActive());
         });
     }
 
@@ -155,7 +156,7 @@ public class UserService {
         }
 
         // Chuyển đổi đối tượng User thành UserResponseDto
-        return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật");
+        return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật", user.isActive());
     }
 
     public void updateUserRole(String username, String roleName) {
@@ -176,6 +177,29 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public boolean toggleUserStatus(String username) {
+        // Tìm người dùng theo username
+        User user = userRepository.findByEmail(username);
 
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+
+        // Thay đổi trạng thái người dùng
+        user.setActive(!user.isActive()); // Nếu đang active thì set thành inactive và ngược lại
+
+        // Lưu lại người dùng sau khi thay đổi trạng thái
+        userRepository.save(user);
+
+        return user.isActive(); // Trả về trạng thái mới của người dùng
+    }
+
+    public boolean isUserActive(String username) {
+        User user = userRepository.findByEmail(username);  // Hoặc sử dụng email nếu username là email
+        if (user == null) {
+            throw new UsernameNotFoundException("Người dùng không tồn tại");
+        }
+        return user != null && user.isActive();  // Trả về trạng thái isActive của người dùng
+    }
 
 }
