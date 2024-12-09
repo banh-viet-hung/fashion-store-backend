@@ -13,8 +13,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private final String SECRET_KEY = "my_secret_key";
-//    private final long EXPIRATION_TIME_ONE_HOUR = 1000L * 60 * 60*24; // 1 giờ
-    private final long EXPIRATION_TIME_ONE_HOUR = 1000L * 60; // 1 giờ
+    private final long EXPIRATION_TIME_ONE_HOUR = 1000L * 60 * 60*24; // 1 giờ
     private final long EXPIRATION_TIME_THIRTY_DAYS = 1000L * 60 * 60 * 24 * 30; // 30 ngày
 
     public String createToken(Map<String, Object> claims, String subject, long expirationTime) {

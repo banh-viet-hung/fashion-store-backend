@@ -80,12 +80,10 @@ public class OrderService {
         });
 
         // Lấy phương thức vận chuyển
-        ShippingMethod shippingMethod = shippingMethodRepository.findByCode(orderCreateDto.getShipping().getCode())
-                .orElseThrow(() -> new RuntimeException("Phương thức vận chuyển không hợp lệ"));
+        ShippingMethod shippingMethod = shippingMethodRepository.findByCode(orderCreateDto.getShipping().getCode()).orElseThrow(() -> new RuntimeException("Phương thức vận chuyển không hợp lệ"));
 
         // Lấy phương thức thanh toán
-        PaymentMethod paymentMethod = paymentMethodRepository.findByCode(orderCreateDto.getPayment())
-                .orElseThrow(() -> new RuntimeException("Phương thức thanh toán không hợp lệ"));
+        PaymentMethod paymentMethod = paymentMethodRepository.findByCode(orderCreateDto.getPayment()).orElseThrow(() -> new RuntimeException("Phương thức thanh toán không hợp lệ"));
 
         // Tạo đơn hàng trước khi thêm OrderDetail vào
         Order order = new Order();
@@ -178,18 +176,12 @@ public class OrderService {
 
         // Sau khi đơn hàng đã được lưu, cập nhật số lượng sản phẩm
         for (ProductVariant productVariant : productVariantsToUpdate) {
-            productVariant.setQuantity(productVariant.getQuantity() - cart.stream()
-                    .filter(item -> item.getProductId().equals(productVariant.getProduct().getId()))
-                    .mapToInt(CartProductDTO::getQuantity)
-                    .sum());
+            productVariant.setQuantity(productVariant.getQuantity() - cart.stream().filter(item -> item.getProductId().equals(productVariant.getProduct().getId())).mapToInt(CartProductDTO::getQuantity).sum());
             productVariantRepository.save(productVariant);
         }
 
         for (Product product : productsToUpdate) {
-            product.setQuantity(product.getQuantity() - cart.stream()
-                    .filter(item -> item.getProductId().equals(product.getId()))
-                    .mapToInt(CartProductDTO::getQuantity)
-                    .sum());
+            product.setQuantity(product.getQuantity() - cart.stream().filter(item -> item.getProductId().equals(product.getId())).mapToInt(CartProductDTO::getQuantity).sum());
             productRepository.save(product);
         }
 
@@ -203,8 +195,7 @@ public class OrderService {
         // Chuyển đổi các đơn hàng thành DTO và lấy trạng thái hiện tại của mỗi đơn hàng
         return orders.stream().map(order -> {
             // Lấy trạng thái hiện tại của đơn hàng
-            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
-                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
 
             String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
 
@@ -222,14 +213,16 @@ public class OrderService {
         Order order = orderOpt.get();
 
         // Kiểm tra quyền sở hữu đơn hàng (chủ sở hữu hoặc ADMIN/STAFF)
-        if (!order.getUser().getEmail().equals(username)) {
-            System.out.println("Order owner: " + order.getUser().getEmail());
-            User user = userRepository.findByEmail(username);
-            // Nếu không phải chủ sở hữu, kiểm tra vai trò
-            String userRole = user.getRole().getName(); // Giả sử bạn có phương thức để lấy role của user
-            if (!userRole.equals("ADMIN") && !userRole.equals("STAFF")) {
-                System.out.println("User role: " + userRole);
-                throw new RuntimeException("Unauthorized");
+        if (order.getUser() != null) {
+            if (!order.getUser().getEmail().equals(username)) {
+                System.out.println("Order owner: " + order.getUser().getEmail());
+                User user = userRepository.findByEmail(username);
+                // Nếu không phải chủ sở hữu, kiểm tra vai trò
+                String userRole = user.getRole().getName(); // Giả sử bạn có phương thức để lấy role của user
+                if (!userRole.equals("ADMIN") && !userRole.equals("STAFF")) {
+                    System.out.println("User role: " + userRole);
+                    throw new RuntimeException("Unauthorized");
+                }
             }
         }
 
@@ -284,10 +277,10 @@ public class OrderService {
 
             // Kiểm tra xem user có null không
             if (statusDetail.getUser() != null && statusDetail.getUser().getRole() != null) {
-                statusDto.setUpdatedBy(statusDetail.getUser().getRole().getName());
+                statusDto.setUpdatedBy(statusDetail.getUser().getFullName() + "  " + "[" + statusDetail.getUser().getRole().getName() + "]");
             } else {
                 // Nếu User hoặc Role là null, có thể gán giá trị mặc định hoặc bỏ qua
-                statusDto.setUpdatedBy("USER");
+                statusDto.setUpdatedBy("Khách vãng lai");
             }
 
             statusDetails.add(statusDto);
@@ -314,8 +307,7 @@ public class OrderService {
         // Chuyển đổi thành DTO
         return ordersPage.map(order -> {
             // Lấy trạng thái hiện tại của đơn hàng
-            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository
-                    .findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order); // Giả sử có phương thức này
 
             String currentStatus = (currentStatusDetail != null) ? currentStatusDetail.getOrderStatus().getStatusName() : "Chưa xác định";
 
