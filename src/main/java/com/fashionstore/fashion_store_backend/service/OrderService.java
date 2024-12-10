@@ -274,6 +274,7 @@ public class OrderService {
             OrderStatusResponseDto statusDto = new OrderStatusResponseDto();
             statusDto.setStatusName(statusDetail.getOrderStatus().getStatusName());
             statusDto.setDescription(statusDetail.getOrderStatus().getDescription());
+            statusDetail.setActive(statusDetail.isActive());
             statusDto.setUpdateAt(statusDetail.getUpdateAt());
 
             // Kiểm tra xem user có null không
@@ -392,6 +393,95 @@ public class OrderService {
 
         // Lưu OrderStatusDetail cho PENDING
         orderStatusDetailRepository.save(pendingStatusDetail);
+    }
+
+    // Hủy đơn hàng theo ID
+    public void cancelOrder(Long orderId, String username) {
+        // Tìm đơn hàng theo ID
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new RuntimeException("Order not found");
+        }
+        Order order = orderOpt.get();
+
+        // Kiểm tra quyền sở hữu đơn hàng (chủ sở hữu hoặc ADMIN/STAFF)
+        if (order.getUser() != null) {
+            if (!order.getUser().getEmail().equals(username)) {
+                System.out.println("Order owner: " + order.getUser().getEmail());
+                User user = userRepository.findByEmail(username);
+                // Nếu không phải chủ sở hữu, kiểm tra vai trò
+                String userRole = user.getRole().getName(); // Giả sử bạn có phương thức để lấy role của user
+                if (!userRole.equals("ADMIN") && !userRole.equals("STAFF")) {
+                    System.out.println("User role: " + userRole);
+                    throw new RuntimeException("Unauthorized");
+                }
+            }
+        }
+
+        // Lấy danh sách tất cả các OrderStatusDetail của đơn hàng
+        List<OrderStatusDetail> orderStatusDetails = order.getOrderStatusDetails();
+
+        // Kiểm tra nếu danh sách rỗng
+        if (orderStatusDetails.isEmpty()) {
+            throw new RuntimeException("Không có trạng thái đơn hàng nào");
+        }
+
+        // Kiểm tra nếu có trạng thái nào là PAID
+        boolean hasPaidStatus = orderStatusDetails.stream().anyMatch(statusDetail -> "PAID".equals(statusDetail.getOrderStatus().getCode()));
+
+        if (hasPaidStatus) {
+            throw new RuntimeException("Không thể hủy đơn hàng đã thanh toán");
+        }
+
+        // Kiểm tra trạng thái hiện tại của đơn hàng
+        OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
+        String currentStatus = currentStatusDetail.getOrderStatus().getCode();
+
+        if (!"WAITING_FOR_PAYMENT".equals(currentStatus) && !"PENDING".equals(currentStatus)) {
+            throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái chờ thanh toán hoặc đang chờ xử lý");
+        }
+
+        // Lấy trạng thái "CANCELLED" từ bảng OrderStatus
+        OrderStatus cancelledStatus = orderStatusRepository.findById("CANCELLED").orElseThrow(() -> new RuntimeException("Trạng thái CANCELLED không tồn tại"));
+
+        // Tạo OrderStatusDetail cho CANCELLED
+        OrderStatusDetail cancelledStatusDetail = new OrderStatusDetail();
+        cancelledStatusDetail.setOrder(order);
+        cancelledStatusDetail.setOrderStatus(cancelledStatus);
+        cancelledStatusDetail.setUpdateAt(LocalDateTime.now());
+        if (username != null) {
+            cancelledStatusDetail.setUser(userRepository.findByEmail(username)); // Người thực hiện thay đổi trạng thái
+        }
+        cancelledStatusDetail.setActive(true); // CANCELLED là active
+
+        // Lấy danh sách OrderDetail của đơn hàng
+        List<OrderDetail> orderDetails = order.getOrderDetails();
+
+        // Khôi phục lại số lượng cho ProductVariant và Product
+        for (OrderDetail orderDetail : orderDetails) {
+            ProductVariant productVariant = productVariantRepository.findByProductIdAndColorAndSize(orderDetail.getProduct().getId(), colorRepository.findByName(orderDetail.getColor()), sizeRepository.findByName(orderDetail.getSize()));
+
+            if (productVariant != null) {
+                productVariant.setQuantity(productVariant.getQuantity() + orderDetail.getQuantity());
+                productVariantRepository.save(productVariant);
+            } else {
+                // Tạo mới ProductVariant nếu không tìm thấy
+                ProductVariant newProductVariant = new ProductVariant();
+                newProductVariant.setProduct(orderDetail.getProduct());
+                newProductVariant.setColor(colorRepository.findByName(orderDetail.getColor()));
+                newProductVariant.setSize(sizeRepository.findByName(orderDetail.getSize()));
+                newProductVariant.setQuantity(orderDetail.getQuantity());
+                productVariantRepository.save(newProductVariant);
+            }
+
+            // Khôi phục lại số lượng cho Product
+            Product product = orderDetail.getProduct();
+            product.setQuantity(product.getQuantity() + orderDetail.getQuantity());
+            productRepository.save(product);
+        }
+
+        // Lưu OrderStatusDetail cho CANCELLED
+        orderStatusDetailRepository.save(cancelledStatusDetail);
     }
 }
 

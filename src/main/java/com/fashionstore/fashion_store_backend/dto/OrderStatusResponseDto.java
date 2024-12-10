@@ -10,4 +10,5 @@ public class OrderStatusResponseDto {
     private String description;
     private LocalDateTime updateAt;
     private String updatedBy;
+    private boolean active;
 }

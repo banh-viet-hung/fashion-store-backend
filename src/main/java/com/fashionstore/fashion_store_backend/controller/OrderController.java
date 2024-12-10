@@ -106,4 +106,18 @@ public class OrderController {
         }
     }
 
+
+    // Hủy đơn hàng theo ID
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<ApiResponse> cancelOrder(@PathVariable Long orderId) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            orderService.cancelOrder(orderId, username);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Đơn hàng đã được hủy thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        }
+    }
 }
