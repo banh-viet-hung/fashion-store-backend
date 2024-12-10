@@ -76,6 +76,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse> getAllOrdersWithPagination(@RequestParam(defaultValue = "1") int page,
                                                                   @RequestParam(defaultValue = "10") int size) {
         try {
+
             // Gọi service để lấy danh sách đơn hàng phân trang
             Page<OrderResponseDto> orderPage = orderService.getAllOrdersWithPagination(page, size);
 

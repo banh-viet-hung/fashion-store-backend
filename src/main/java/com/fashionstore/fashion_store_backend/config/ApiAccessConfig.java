@@ -3,9 +3,9 @@ package com.fashionstore.fashion_store_backend.config;
 public class ApiAccessConfig {
 
     // Các API công khai (không cần xác thực)
-    public static final String[] PUBLIC_API_GET = {"/cartProduct", "/cartProduct/**", "/category", "/category/**", "/color", "/color/**", "/favoriteProduct", "/favoriteProduct/**", "/feature", "/feature/**", "/feedback", "/feedback/**", "/image", "/image/**", "/paymentMethod", "/paymentMethod/**", "/product", "/product/**", "/role", "/role/**", "/shippingMethod", "/shippingMethod/**", "/size", "/size/**", "/user/check-email", "/user/request-password-reset", "/user/reset-password/**", "/product-variant/quantity/**", "/products/{productId}", "/user/check-status"};
+    public static final String[] PUBLIC_API_GET = {"/cartProduct", "/cartProduct/**", "/category", "/category/**", "/color", "/color/**", "/favoriteProduct", "/favoriteProduct/**", "/feature", "/feature/**", "/feedback", "/feedback/**", "/image", "/image/**", "/paymentMethod", "/paymentMethod/**", "/product", "/product/**", "/role", "/role/**", "/shippingMethod", "/shippingMethod/**", "/size", "/size/**", "/user/check-email", "/user/request-password-reset", "/user/reset-password/**", "/product-variant/quantity/**", "/products/{productId}", "/user/check-status", "/payment/create-payment-url/{orderId}"};
 
-    public static final String[] PUBLIC_API_POST = {"/user/register", "/api/auth/login", "orders/create"};
+    public static final String[] PUBLIC_API_POST = {"/user/register", "/api/auth/login", "orders/create", "/payment/update-status/{orderId}"};
 
     // Các API yêu cầu vai trò ADMIN, STAFF, USER (Tất cả các role có thể truy cập)
     public static final String[] ADMIN_STAFF_USER_API_GET = {"/user/info", "/address", "/user/avatar-and-fullname", "/user/favorite", "/cart/**", "/orders/list", "/orders/{orderId}"};

@@ -160,10 +160,11 @@ public class OrderService {
         // Lưu đơn hàng
         orderRepository.save(order);
 
-        // Tạo trạng thái đơn hàng mặc định là PENDING
+        // Tạo trạng thái đơn hàng mặc định
+        String initialStatus = orderCreateDto.getPayment().equals("COD") ? "PENDING" : "WAITING_FOR_PAYMENT";  // Kiểm tra phương thức thanh toán
         OrderStatusDetail orderStatusDetail = new OrderStatusDetail();
         orderStatusDetail.setOrder(order);
-        orderStatusDetail.setOrderStatus(orderStatusRepository.findById("PENDING").orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng không hợp lệ")));
+        orderStatusDetail.setOrderStatus(orderStatusRepository.findById(initialStatus).orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng không hợp lệ")));
         orderStatusDetail.setUpdateAt(LocalDateTime.now());
         orderStatusDetail.setUser(user);
         orderStatusDetail.setActive(true);
@@ -347,7 +348,51 @@ public class OrderService {
         orderStatusDetailRepository.save(newOrderStatusDetail);
     }
 
+    public void updateOrderStatusToPaidAndPending(Long orderId, String username) {
+        // Tìm đơn hàng theo orderId
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new RuntimeException("Đơn hàng không tồn tại");
+        }
+        Order order = orderOpt.get();
 
+        // Kiểm tra trạng thái đơn hàng hiện tại
+        OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
+
+        if (currentStatusDetail == null || !currentStatusDetail.getOrderStatus().getCode().equals("WAITING_FOR_PAYMENT")) {
+            throw new RuntimeException("Đơn hàng đã được xử lý");
+        }
+
+        // Lấy trạng thái "PAID" và "PENDING" từ bảng OrderStatus
+        OrderStatus paidStatus = orderStatusRepository.findById("PAID").orElseThrow(() -> new RuntimeException("Trạng thái PAID không tồn tại"));
+        OrderStatus pendingStatus = orderStatusRepository.findById("PENDING").orElseThrow(() -> new RuntimeException("Trạng thái PENDING không tồn tại"));
+
+        // Tạo OrderStatusDetail cho PAID
+        OrderStatusDetail paidStatusDetail = new OrderStatusDetail();
+        paidStatusDetail.setOrder(order);
+        paidStatusDetail.setOrderStatus(paidStatus);
+        paidStatusDetail.setUpdateAt(LocalDateTime.now());
+        if (username != null) {
+            paidStatusDetail.setUser(userRepository.findByEmail(username)); // Người thực hiện thay đổi trạng thái
+        }
+        paidStatusDetail.setActive(false); // PAID không active
+
+        // Lưu OrderStatusDetail cho PAID
+        orderStatusDetailRepository.save(paidStatusDetail);
+
+        // Tạo OrderStatusDetail cho PENDING (active)
+        OrderStatusDetail pendingStatusDetail = new OrderStatusDetail();
+        pendingStatusDetail.setOrder(order);
+        pendingStatusDetail.setOrderStatus(pendingStatus);
+        pendingStatusDetail.setUpdateAt(LocalDateTime.now());
+        if (username != null) {
+            pendingStatusDetail.setUser(userRepository.findByEmail(username)); // Người thực hiện thay đổi trạng thái
+        }
+        pendingStatusDetail.setActive(true); // PENDING là active
+
+        // Lưu OrderStatusDetail cho PENDING
+        orderStatusDetailRepository.save(pendingStatusDetail);
+    }
 }
 
 
