@@ -108,7 +108,7 @@ public class OrderController {
 
 
     // Hủy đơn hàng theo ID
-    @DeleteMapping("/{orderId}")
+    @DeleteMapping("/{orderId}/cancel")
     public ResponseEntity<ApiResponse> cancelOrder(@PathVariable Long orderId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
