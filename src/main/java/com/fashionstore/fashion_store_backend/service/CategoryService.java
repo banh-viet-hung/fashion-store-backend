@@ -8,6 +8,9 @@ import com.fashionstore.fashion_store_backend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class CategoryService {
 
@@ -59,4 +62,16 @@ public class CategoryService {
         // Xóa Category
         categoryRepository.delete(category);  // Xóa danh mục khỏi cơ sở dữ liệu
     }
+
+    public List<Category> getChildCategoriesBySlug(String slug) {
+        // Tìm danh mục dựa trên slug
+        Optional<Category> parentCategoryOpt = categoryRepository.findBySlug(slug);
+        if (parentCategoryOpt.isEmpty()) {
+            throw new RuntimeException("Danh mục không tồn tại với slug: " + slug);
+        }
+
+        Category parentCategory = parentCategoryOpt.get();
+        return parentCategory.getChildCategories();
+    }
+
 }

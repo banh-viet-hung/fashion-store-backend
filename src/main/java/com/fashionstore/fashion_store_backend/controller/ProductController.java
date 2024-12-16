@@ -1,6 +1,7 @@
 package com.fashionstore.fashion_store_backend.controller;
 
 import com.fashionstore.fashion_store_backend.dto.ProductCreateDto;
+import com.fashionstore.fashion_store_backend.dto.ProductFilterRequestDto;
 import com.fashionstore.fashion_store_backend.dto.ProductImagesCreateDto;
 import com.fashionstore.fashion_store_backend.dto.ProductResponseDto;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
@@ -92,5 +93,31 @@ public class ProductController {
         }
     }
 
+    @PostMapping("/filter")
+    public ResponseEntity<ApiResponse> getFilteredProducts(@RequestBody @Valid ProductFilterRequestDto filterRequest) {
+        try {
+            // Gọi service để lấy danh sách sản phẩm thỏa mãn các điều kiện và sắp xếp
+            var productsPage = productService.getFilteredProducts(
+                    filterRequest.getCategorySlugs(),
+                    filterRequest.getSizeNames(),
+                    filterRequest.getColorNames(),
+                    filterRequest.getMinPrice(),
+                    filterRequest.getMaxPrice(),
+                    filterRequest.getPage(),
+                    filterRequest.getSize(),
+                    filterRequest.getSortBy()  // Thêm tham số sắp xếp
+            );
+
+            // Kiểm tra nếu danh sách sản phẩm trống
+            if (productsPage.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Không có sản phẩm phù hợp với điều kiện lọc", true, productsPage));
+            }
+
+            // Trả về API response với dữ liệu phân trang khi có sản phẩm
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Lấy sản phẩm thành công", true, productsPage));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
 
 }

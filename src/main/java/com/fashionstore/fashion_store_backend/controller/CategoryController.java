@@ -1,6 +1,8 @@
 package com.fashionstore.fashion_store_backend.controller;
 
 import com.fashionstore.fashion_store_backend.dto.CategoryCreateDto;
+import com.fashionstore.fashion_store_backend.dto.CategoryResponseDto;
+import com.fashionstore.fashion_store_backend.model.Category;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.CategoryService;
 import jakarta.validation.Valid;
@@ -9,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/categories")
@@ -55,4 +60,22 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
+
+    @GetMapping("/children/{slug}")
+    public ResponseEntity<ApiResponse> getChildCategoriesBySlug(@PathVariable("slug") String slug) {
+        try {
+            // Gọi service để lấy danh sách các danh mục con
+            List<Category> childCategories = categoryService.getChildCategoriesBySlug(slug);
+
+            // Chuyển đổi danh sách Category thành danh sách CategoryResponseDto
+            List<CategoryResponseDto> responseDtos = childCategories.stream()
+                    .map(category -> new CategoryResponseDto(category.getId(), category.getName(), category.getSlug()))
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(new ApiResponse("Lấy danh sách danh mục con thành công", true, responseDtos));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
 }

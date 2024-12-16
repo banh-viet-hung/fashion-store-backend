@@ -1,17 +1,21 @@
 package com.fashionstore.fashion_store_backend.service;
 
 import com.fashionstore.fashion_store_backend.dto.ProductCreateDto;
+import com.fashionstore.fashion_store_backend.dto.ProductFilteredResponseDto;
 import com.fashionstore.fashion_store_backend.dto.ProductResponseDto;
 import com.fashionstore.fashion_store_backend.dto.ProductVariantResponseDto;
 import com.fashionstore.fashion_store_backend.model.*;
 import com.fashionstore.fashion_store_backend.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -148,6 +152,7 @@ public class ProductService {
         product.setDescription(productDTO.getDescription());
         product.setPrice(productDTO.getPrice());
         product.setSalePrice(productDTO.getSalePrice() > 0 ? productDTO.getSalePrice() : 0);
+        product.setUpdatedAt(LocalDateTime.now());
         product.setDeleted(false); // Đảm bảo trạng thái không bị xóa
 
         // Xóa danh mục cũ và cập nhật danh mục mới
@@ -170,6 +175,79 @@ public class ProductService {
 
         // Lưu lại sản phẩm đã được cập nhật
         return productRepository.save(product).getId();
+    }
+
+    public Page<ProductFilteredResponseDto> getFilteredProducts(
+            List<String> categorySlugs,
+            List<String> sizeNames,
+            List<String> colorNames,
+            Double minPrice,
+            Double maxPrice,
+            int page,
+            int size,
+            String sortBy) {
+
+        // Tính số lượng category, size, color cần thiết
+        int categorySlugsCount = (categorySlugs != null) ? categorySlugs.size() : 0;
+        int sizeNamesCount = (sizeNames != null) ? sizeNames.size() : 0;
+        int colorNamesCount = (colorNames != null) ? colorNames.size() : 0;
+
+        // Chọn kiểu sắp xếp
+        Sort sort = getSortByCriteria(sortBy);
+
+        // Sử dụng PageRequest với Sort
+        Pageable pageRequest = PageRequest.of(page, size, sort);
+
+        // Lọc theo các điều kiện
+        Page<Product> productsPage = productRepository.findFilteredProducts(
+                categorySlugs,
+                sizeNames,
+                colorNames,
+                minPrice,
+                maxPrice,
+                pageRequest,
+                categorySlugsCount,
+                colorNamesCount,
+                sizeNamesCount
+        );
+
+        // Kiểm tra nếu danh sách sản phẩm trống
+        if (productsPage.isEmpty()) {
+            // Trả về một Page rỗng nếu không tìm thấy sản phẩm
+            return new PageImpl<>(new ArrayList<>(), pageRequest, 0);
+        }
+
+        // Chuyển đổi từ Product entity sang ProductFilteredResponseDto
+        List<ProductFilteredResponseDto> productDtos = productsPage.stream()
+                .map(product -> new ProductFilteredResponseDto(product))
+                .collect(Collectors.toList());
+
+        // Trả về một Page với kết quả phân trang
+        return new PageImpl<>(productDtos, pageRequest, productsPage.getTotalElements());
+    }
+    private Sort getSortByCriteria(String sortBy) {
+        // Nếu sortBy null, trả về mặc định: không sắp xếp
+        if (sortBy == null) {
+            return Sort.unsorted();
+        }
+
+        // Dùng Map để quản lý các kiểu sắp xếp
+        Map<String, Sort> sortMap = new HashMap<>();
+        sortMap.put("priceAsc", Sort.by(
+                Sort.Order.asc("salePrice").nullsLast(),
+                Sort.Order.asc("price")
+        ));
+        sortMap.put("priceDesc", Sort.by(
+                Sort.Order.desc("salePrice").nullsLast(),
+                Sort.Order.desc("price")
+        ));
+        sortMap.put("newest", Sort.by(
+                Sort.Order.desc("updatedAt"),
+                Sort.Order.desc("createdAt")
+        ));
+
+        // Nếu sortBy có trong Map, trả về giá trị tương ứng, nếu không trả về mặc định
+        return sortMap.getOrDefault(sortBy, Sort.unsorted());
     }
 
 }

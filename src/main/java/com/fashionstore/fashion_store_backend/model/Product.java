@@ -37,6 +37,9 @@ public class Product {
     // quantity: số lượng sản phẩm còn lại
     private int quantity;
 
+    // updatedAt: thời gian cập nhật sản phẩm
+    private LocalDateTime updatedAt;
+
     // Đã xóa
     private boolean deleted;
 
