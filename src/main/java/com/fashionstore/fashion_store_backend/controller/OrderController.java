@@ -64,7 +64,7 @@ public class OrderController {
         try {
             OrderDetailResponseDto orderResponseDto = orderService.getOrderById(orderId, username);
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ApiResponse("Thông tin đơn hàng", true, orderResponseDto));
+                    .body(new ApiResponse("Đã tìm được đơn hàng phù hợp", true, orderResponseDto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(e.getMessage(), false));

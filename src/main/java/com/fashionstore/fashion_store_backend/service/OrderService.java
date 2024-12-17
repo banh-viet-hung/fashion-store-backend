@@ -209,7 +209,7 @@ public class OrderService {
         // Lấy thông tin đơn hàng từ cơ sở dữ liệu
         Optional<Order> orderOpt = orderRepository.findById(orderId);
         if (orderOpt.isEmpty()) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("Không tìm thấy đơn hàng");
         }
         Order order = orderOpt.get();
 
@@ -222,7 +222,7 @@ public class OrderService {
                 String userRole = user.getRole().getName(); // Giả sử bạn có phương thức để lấy role của user
                 if (!userRole.equals("ADMIN") && !userRole.equals("STAFF")) {
                     System.out.println("User role: " + userRole);
-                    throw new RuntimeException("Unauthorized");
+                    throw new RuntimeException("Không thể xem đơn hàng của người khác!");
                 }
             }
         }
@@ -385,7 +385,7 @@ public class OrderService {
         OrderStatusDetail pendingStatusDetail = new OrderStatusDetail();
         pendingStatusDetail.setOrder(order);
         pendingStatusDetail.setOrderStatus(pendingStatus);
-        pendingStatusDetail.setUpdateAt(LocalDateTime.now());
+        pendingStatusDetail.setUpdateAt(LocalDateTime.now().plusSeconds(1));
         if (username != null) {
             pendingStatusDetail.setUser(userRepository.findByEmail(username)); // Người thực hiện thay đổi trạng thái
         }
