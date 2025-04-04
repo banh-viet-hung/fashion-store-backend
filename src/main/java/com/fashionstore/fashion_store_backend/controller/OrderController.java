@@ -3,6 +3,7 @@ package com.fashionstore.fashion_store_backend.controller;
 import com.fashionstore.fashion_store_backend.dto.OrderCreateDto;
 import com.fashionstore.fashion_store_backend.dto.OrderDetailResponseDto;
 import com.fashionstore.fashion_store_backend.dto.OrderResponseDto;
+import com.fashionstore.fashion_store_backend.dto.UserOrderResponseDto;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.OrderService;
 import jakarta.validation.Valid;
@@ -115,6 +116,21 @@ public class OrderController {
             orderService.cancelOrder(orderId, username);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ApiResponse("Đơn hàng đã được hủy thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+    /**
+     * API lấy danh sách đơn hàng theo ID người dùng (chỉ dành cho ADMIN và STAFF)
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse> getOrdersByUserId(@PathVariable Long userId) {
+        try {
+            List<UserOrderResponseDto> orders = orderService.getOrdersByUserId(userId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Danh sách đơn hàng của người dùng", true, orders));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(e.getMessage(), false));

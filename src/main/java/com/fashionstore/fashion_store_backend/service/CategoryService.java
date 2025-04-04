@@ -7,6 +7,7 @@ import com.fashionstore.fashion_store_backend.repository.CategoryRepository;
 import com.fashionstore.fashion_store_backend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +21,13 @@ public class CategoryService {
     @Autowired
     private ProductRepository productRepository;
 
-    // Phương thức tạo danh mục mới
     public Long createCategory(CategoryCreateDto categoryCreateDto) {
+        // Kiểm tra xem slug đã tồn tại hay chưa
+        Optional<Category> existingCategory = categoryRepository.findBySlug(categoryCreateDto.getSlug());
+        if (existingCategory.isPresent()) {
+            throw new RuntimeException("Slug '" + categoryCreateDto.getSlug() + "' đã tồn tại");
+        }
+
         // Chuyển từ DTO sang Entity
         Category category = new Category();
         category.setName(categoryCreateDto.getName());
@@ -61,6 +67,23 @@ public class CategoryService {
 
         // Xóa Category
         categoryRepository.delete(category);  // Xóa danh mục khỏi cơ sở dữ liệu
+    }
+
+    @Transactional
+    public void deleteManyCategories(List<Long> ids) {
+        for (Long id : ids) {
+            Category category = categoryRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại với ID: " + id));
+
+            // Xóa mối quan hệ giữa Category và Product
+            for (Product product : category.getProducts()) {
+                product.getCategories().remove(category);
+                productRepository.save(product);
+            }
+
+            // Xóa Category
+            categoryRepository.delete(category);
+        }
     }
 
     public List<Category> getChildCategoriesBySlug(String slug) {

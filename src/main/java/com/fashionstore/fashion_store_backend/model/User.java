@@ -41,7 +41,7 @@ public class User {
     // Chỉ định một Role duy nhất cho User
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id") // Khóa ngoại trong bảng User
-    private Role role;
+    private Role role;  
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<FavoriteProduct> favoriteProducts;

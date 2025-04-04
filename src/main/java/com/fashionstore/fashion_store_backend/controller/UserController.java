@@ -1,6 +1,7 @@
 package com.fashionstore.fashion_store_backend.controller;
 
 import com.fashionstore.fashion_store_backend.dto.*;
+import com.fashionstore.fashion_store_backend.exception.EmailAlreadyExistsException;
 import com.fashionstore.fashion_store_backend.model.User;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.FavoriteProductService;
@@ -183,16 +184,26 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUsersWithPagination(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String roleName) {
+
+        if (page < 1) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse("Số trang phải lớn hơn hoặc bằng 1", false));
+        }
+        if (size < 1) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse("Kích thước trang phải lớn hơn hoặc bằng 1", false));
+        }
 
         try {
-            Page<UserResponseDto> userPage = userService.getAllUsersWithPagination(page, size);
-
+            Page<UserRspDto> userPage = userService.getAllUsersWithPagination(page, size, email, roleName);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ApiResponse("Danh sách người dùng", true, userPage));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse("Lỗi server", false));
+                    .body(new ApiResponse("Lỗi server: " + e.getMessage(), false));
         }
     }
 
@@ -249,5 +260,22 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse(message, isActive));
     }
 
+    @PostMapping("/admin/create-user")
+    public ResponseEntity<ApiResponse> createUserByAdmin(@Valid @RequestBody AdminUserCreateDto userCreateDto) {
+        try {
+            User user = userService.createUserByAdmin(userCreateDto);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse("Tạo người dùng thành công", true, user.getEmail()));
+        } catch (EmailAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Lỗi server: " + e.getMessage(), false));
+        }
+    }
 
 }

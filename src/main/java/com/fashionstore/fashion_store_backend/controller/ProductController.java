@@ -1,14 +1,12 @@
 package com.fashionstore.fashion_store_backend.controller;
 
-import com.fashionstore.fashion_store_backend.dto.ProductCreateDto;
-import com.fashionstore.fashion_store_backend.dto.ProductFilterRequestDto;
-import com.fashionstore.fashion_store_backend.dto.ProductImagesCreateDto;
-import com.fashionstore.fashion_store_backend.dto.ProductResponseDto;
+import com.fashionstore.fashion_store_backend.dto.*;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.ImageService;
 import com.fashionstore.fashion_store_backend.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -71,6 +69,16 @@ public class ProductController {
         }
     }
 
+    @PostMapping("/delete-many")
+    public ResponseEntity<ApiResponse> softDeleteManyProducts(@RequestBody DeleteManyProductsRequestDto requestDto) {
+        try {
+            productService.softDeleteManyProducts(requestDto.getIds());
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Xóa nhiều sản phẩm thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable Long productId) {
         try {
@@ -117,6 +125,34 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Lấy sản phẩm thành công", true, productsPage));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse> getProductList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String status) {
+        try {
+            // Gọi service để lấy danh sách sản phẩm với phân trang và lọc
+            Page<ProductFilteredRspDto> productsPage = productService.getProductList(
+                    page, limit, category, title, status);
+
+            // Kiểm tra nếu danh sách sản phẩm trống
+            if (productsPage.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ApiResponse("Không tìm thấy sản phẩm phù hợp", true, productsPage));
+            }
+
+            // Trả về phản hồi thành công với dữ liệu phân trang
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Lấy danh sách sản phẩm thành công", true, productsPage));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
         }
     }
 

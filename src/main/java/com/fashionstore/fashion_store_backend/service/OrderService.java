@@ -483,6 +483,39 @@ public class OrderService {
         // Lưu OrderStatusDetail cho CANCELLED
         orderStatusDetailRepository.save(cancelledStatusDetail);
     }
+
+    public List<UserOrderResponseDto> getOrdersByUserId(Long userId) {
+        // Tìm người dùng theo ID
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + userId));
+        
+        // Lấy tất cả đơn hàng của người dùng
+        List<Order> orders = user.getOrders();
+        
+        // Chuyển đổi đơn hàng thành UserOrderResponseDto
+        return orders.stream().map(order -> {
+            // Lấy trạng thái hiện tại của đơn hàng
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
+            
+            String currentStatus = (currentStatusDetail != null) 
+                    ? currentStatusDetail.getOrderStatus().getStatusName() 
+                    : "Chưa xác định";
+            
+            // Lấy số điện thoại từ địa chỉ giao hàng
+            String phoneNumber = order.getShippingAddress() != null 
+                    ? order.getShippingAddress().getPhoneNumber() 
+                    : "Không có";
+            
+            // Tạo và trả về DTO
+            return new UserOrderResponseDto(
+                    order.getId(),
+                    order.getOrderDate(),
+                    phoneNumber,
+                    order.getTotal(),
+                    currentStatus
+            );
+        }).collect(Collectors.toList());
+    }
 }
 
 

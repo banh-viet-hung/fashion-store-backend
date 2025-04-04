@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -138,15 +139,36 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public Page<UserResponseDto> getAllUsersWithPagination(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size); // Cấu hình phân trang
+    public Page<UserRspDto> getAllUsersWithPagination(int page, int size, String email, String roleName) {
+        Pageable pageable = PageRequest.of(page - 1, size); // Page bắt đầu từ 0 trong Spring Data
 
-        Page<User> userPage = userRepository.findAll(pageable); // Lấy danh sách người dùng phân trang
+        Specification<User> spec = Specification.where(null);
 
-        return userPage.map(user -> {
-            // Chuyển đổi User thành UserResponseDto
-            return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật", user.isActive());
-        });
+        if (email != null && !email.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.like(root.get("email"), "%" + email.trim() + "%"));
+        }
+
+        if (roleName != null && !roleName.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("role").get("name"), roleName.trim()));
+        }
+
+        Page<User> userPage = userRepository.findAll(spec, pageable);
+
+        return userPage.map(this::convertToUserResponseDto);
+    }
+
+    private UserRspDto convertToUserResponseDto(User user) {
+        UserRspDto dto = new UserRspDto();
+        dto.setId(user.getId());
+        dto.setFullName(user.getFullName());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setGender(user.getGender());
+        dto.setDateOfBirth(user.getDateOfBirth());
+        dto.setEmail(user.getEmail());
+        dto.setAvatar(user.getAvatar());
+        dto.setActive(user.isActive());
+        dto.setRoleName(user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật");
+        return dto;
     }
 
     public UserResponseDto getUserInfoByUsername(String username) {
@@ -200,6 +222,28 @@ public class UserService {
             throw new UsernameNotFoundException("Người dùng không tồn tại");
         }
         return user != null && user.isActive();  // Trả về trạng thái isActive của người dùng
+    }
+
+    @Transactional
+    public User createUserByAdmin(AdminUserCreateDto userCreateDto) {
+        if (userRepository.existsByEmail(userCreateDto.getEmail())) {
+            throw new EmailAlreadyExistsException("Email đã tồn tại");
+        }
+
+        User user = new User();
+        user.setFullName(userCreateDto.getFullName());
+        user.setEmail(userCreateDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userCreateDto.getPassword()));
+        user.setActive(true);
+
+        // Tìm role từ database dựa trên tên role được cung cấp
+        Role role = roleRepository.findByName(userCreateDto.getRole());
+        if (role == null) {
+            throw new RuntimeException("Vai trò không hợp lệ");
+        }
+        user.setRole(role);
+
+        return userRepository.save(user);
     }
 
 }

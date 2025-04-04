@@ -2,6 +2,7 @@ package com.fashionstore.fashion_store_backend.controller;
 
 import com.fashionstore.fashion_store_backend.dto.CategoryCreateDto;
 import com.fashionstore.fashion_store_backend.dto.CategoryResponseDto;
+import com.fashionstore.fashion_store_backend.dto.DeleteManyCategoriesRequestDto;
 import com.fashionstore.fashion_store_backend.model.Category;
 import com.fashionstore.fashion_store_backend.response.ApiResponse;
 import com.fashionstore.fashion_store_backend.service.CategoryService;
@@ -29,9 +30,11 @@ public class CategoryController {
         try {
             // Gọi service để tạo mới danh mục
             Long categoryId = categoryService.createCategory(categoryCreateDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Tạo danh mục thành công", true, categoryId));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse("Tạo danh mục thành công", true, categoryId));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
         }
     }
 
@@ -60,6 +63,18 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
+
+    @PostMapping("/delete-many")
+    public ResponseEntity<ApiResponse> deleteManyCategories(@RequestBody DeleteManyCategoriesRequestDto request) {
+        try {
+            categoryService.deleteManyCategories(request.getIds());
+            return ResponseEntity.ok(new ApiResponse("Xóa các danh mục thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
 
     @GetMapping("/children/{slug}")
     public ResponseEntity<ApiResponse> getChildCategoriesBySlug(@PathVariable("slug") String slug) {

@@ -8,6 +8,7 @@ import java.util.List;
 @Entity
 @Data
 public class OrderStatus {
+    
     @Id
     private String code;
 

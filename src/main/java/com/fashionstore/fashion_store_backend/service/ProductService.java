@@ -1,14 +1,12 @@
 package com.fashionstore.fashion_store_backend.service;
 
-import com.fashionstore.fashion_store_backend.dto.ProductCreateDto;
-import com.fashionstore.fashion_store_backend.dto.ProductFilteredResponseDto;
-import com.fashionstore.fashion_store_backend.dto.ProductResponseDto;
-import com.fashionstore.fashion_store_backend.dto.ProductVariantResponseDto;
+import com.fashionstore.fashion_store_backend.dto.*;
 import com.fashionstore.fashion_store_backend.model.*;
 import com.fashionstore.fashion_store_backend.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -91,6 +89,29 @@ public class ProductService {
 
         // Lưu sản phẩm sau khi thay đổi
         productRepository.save(product);
+    }
+
+    @Transactional
+    public void softDeleteManyProducts(List<Long> productIds) {
+        // Lấy tất cả sản phẩm theo danh sách IDs
+        List<Product> products = productRepository.findAllById(productIds);
+
+        for (Product product : products) {
+            // Cập nhật số lượng của sản phẩm về 0
+            product.setQuantity(0);
+
+            // Cập nhật số lượng của tất cả các biến thể của sản phẩm về 0
+            for (ProductVariant variant : product.getVariants()) {
+                variant.setQuantity(0);
+                productVariantRepository.save(variant);
+            }
+
+            // Đánh dấu sản phẩm là đã xóa
+            product.setDeleted(true);
+
+            // Lưu sản phẩm sau khi thay đổi
+            productRepository.save(product);
+        }
     }
 
     public ProductResponseDto getProductById(Long productId) throws Exception {
@@ -248,6 +269,54 @@ public class ProductService {
 
         // Nếu sortBy có trong Map, trả về giá trị tương ứng, nếu không trả về mặc định
         return sortMap.getOrDefault(sortBy, Sort.unsorted());
+    }
+
+    public Page<ProductFilteredRspDto> getProductList(
+            int page, int limit, String categorySlug, String title, String status) {
+        // Tạo Pageable object để phân trang
+        Pageable pageable = PageRequest.of(page, limit);
+
+        // Xây dựng Specification để lọc động
+        Specification<Product> spec = Specification.where(null);
+
+        // Lọc theo category slug
+        if (categorySlug != null && !categorySlug.isEmpty()) {
+            Category category = categoryRepository.findBySlug(categorySlug)
+                    .orElseThrow(() -> new IllegalArgumentException("Danh mục không tồn tại"));
+            spec = spec.and((root, query, cb) ->
+                    cb.isMember(category, root.get("categories")));
+        }
+
+        // Lọc theo title (tên sản phẩm)
+        if (title != null && !title.isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("name")), "%" + title.toLowerCase() + "%"));
+        }
+
+        // Lọc theo status (còn hàng hay hết hàng)
+        if (status != null && !status.isEmpty()) {
+            if (status.equalsIgnoreCase("con_hang")) {
+                spec = spec.and((root, query, cb) -> cb.greaterThan(root.get("quantity"), 0));
+            } else if (status.equalsIgnoreCase("het_hang")) {
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("quantity"), 0));
+            } else {
+                throw new IllegalArgumentException("Giá trị status không hợp lệ. Chỉ chấp nhận 'con_hang' hoặc 'het_hang'.");
+            }
+        }
+
+        // Chỉ lấy các sản phẩm chưa bị xóa
+        spec = spec.and((root, query, cb) -> cb.isFalse(root.get("deleted")));
+
+        // Thực hiện truy vấn với Specification và Pageable
+        Page<Product> productsPage = productRepository.findAll(spec, pageable);
+
+        // Chuyển đổi từ Product entity sang ProductFilteredRspDto
+        List<ProductFilteredRspDto> productDtos = productsPage.stream()
+                .map(ProductFilteredRspDto::new)
+                .collect(Collectors.toList());
+
+        // Trả về Page với kết quả phân trang
+        return new PageImpl<>(productDtos, pageable, productsPage.getTotalElements());
     }
 
 }
