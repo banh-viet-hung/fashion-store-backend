@@ -16,6 +16,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import org.springframework.data.jpa.domain.Specification;
+
 @Service
 public class OrderService {
 
@@ -295,6 +301,24 @@ public class OrderService {
         responseDto.setPriceDetails(priceDetails);
         responseDto.setShippingAddress(addressDto);
         responseDto.setOrderStatusDetails(statusDetails);
+        
+        // Thêm thông tin phương thức thanh toán
+        PaymentMethodDto paymentMethodDto = new PaymentMethodDto();
+        PaymentMethod paymentMethod = order.getPaymentMethod();
+        paymentMethodDto.setCode(paymentMethod.getCode());
+        paymentMethodDto.setName(paymentMethod.getName());
+        paymentMethodDto.setDescription(paymentMethod.getDescription());
+        responseDto.setPaymentMethod(paymentMethodDto);
+        
+        // Thêm thông tin phương thức vận chuyển
+        ShippingMethodDto shippingMethodDto = new ShippingMethodDto();
+        ShippingMethod shippingMethod = order.getShippingMethod();
+        shippingMethodDto.setCode(shippingMethod.getCode());
+        shippingMethodDto.setName(shippingMethod.getName());
+        shippingMethodDto.setDescription(shippingMethod.getDescription());
+        shippingMethodDto.setFee(shippingMethod.getFee());
+        responseDto.setShippingMethod(shippingMethodDto);
+        
         return responseDto;
     }
 
@@ -515,6 +539,85 @@ public class OrderService {
                     currentStatus
             );
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy danh sách đơn hàng cho Admin và Staff với bộ lọc và phân trang
+     * @param page Số trang
+     * @param size Số lượng đơn hàng trên một trang
+     * @param filterDto Các điều kiện lọc
+     * @return Danh sách đơn hàng đã được phân trang và lọc
+     */
+    public Page<OrderResponseDto> getOrdersForAdmin(int page, int size, AdminOrderFilterRequestDto filterDto) {
+        // Tạo Pageable với phân trang và sắp xếp theo ngày tạo đơn hàng giảm dần
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("orderDate")));
+
+        // Tạo Specification để áp dụng điều kiện lọc
+        Specification<Order> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Lọc theo ID đơn hàng nếu có
+            if (filterDto.getOrderId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("id"), filterDto.getOrderId()));
+            }
+
+            // Lọc theo phương thức thanh toán nếu có
+            if (filterDto.getPaymentMethodCode() != null && !filterDto.getPaymentMethodCode().isEmpty()) {
+                Join<Order, PaymentMethod> paymentMethodJoin = root.join("paymentMethod");
+                predicates.add(criteriaBuilder.equal(paymentMethodJoin.get("code"), filterDto.getPaymentMethodCode()));
+            }
+
+            // Lọc theo phương thức vận chuyển nếu có
+            if (filterDto.getShippingMethodCode() != null && !filterDto.getShippingMethodCode().isEmpty()) {
+                Join<Order, ShippingMethod> shippingMethodJoin = root.join("shippingMethod");
+                predicates.add(criteriaBuilder.equal(shippingMethodJoin.get("code"), filterDto.getShippingMethodCode()));
+            }
+
+            // Lọc theo trạng thái đơn hàng nếu có
+            if (filterDto.getOrderStatusCode() != null && !filterDto.getOrderStatusCode().isEmpty()) {
+                // Subquery để lấy đơn hàng có trạng thái hiện tại (isActive = true) khớp với mã trạng thái
+                Subquery<Long> statusSubquery = query.subquery(Long.class);
+                Root<OrderStatusDetail> statusDetailRoot = statusSubquery.from(OrderStatusDetail.class);
+                statusSubquery.select(statusDetailRoot.get("order").get("id"))
+                        .where(
+                            criteriaBuilder.and(
+                                criteriaBuilder.equal(statusDetailRoot.get("orderStatus").get("code"), filterDto.getOrderStatusCode()),
+                                criteriaBuilder.isTrue(statusDetailRoot.get("isActive"))
+                            )
+                        );
+                predicates.add(root.get("id").in(statusSubquery));
+            }
+
+            // Lọc theo ngày bắt đầu nếu có
+            if (filterDto.getStartDate() != null) {
+                LocalDateTime startDateTime = filterDto.getStartDate().atStartOfDay();
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDateTime));
+            }
+
+            // Lọc theo ngày kết thúc nếu có
+            if (filterDto.getEndDate() != null) {
+                LocalDateTime endDateTime = filterDto.getEndDate().plusDays(1).atStartOfDay();
+                predicates.add(criteriaBuilder.lessThan(root.get("orderDate"), endDateTime));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // Lấy danh sách đơn hàng từ database dựa trên các điều kiện lọc
+        Page<Order> ordersPage = orderRepository.findAll(specification, pageable);
+
+        // Chuyển đổi đơn hàng thành OrderResponseDto
+        return ordersPage.map(order -> {
+            // Lấy trạng thái hiện tại của đơn hàng
+            OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
+
+            String currentStatus = (currentStatusDetail != null) 
+                    ? currentStatusDetail.getOrderStatus().getStatusName() 
+                    : "Chưa xác định";
+
+            // Trả về DTO
+            return new OrderResponseDto(order.getId(), order.getOrderDate(), order.getTotal(), currentStatus);
+        });
     }
 }
 

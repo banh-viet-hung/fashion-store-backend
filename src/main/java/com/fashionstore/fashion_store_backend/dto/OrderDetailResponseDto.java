@@ -10,4 +10,6 @@ public class OrderDetailResponseDto {
     private OrderPriceResponseDto priceDetails;
     private AddressResponseDto shippingAddress;
     private List<OrderStatusResponseDto> orderStatusDetails;
+    private PaymentMethodDto paymentMethod;
+    private ShippingMethodDto shippingMethod;
 }
