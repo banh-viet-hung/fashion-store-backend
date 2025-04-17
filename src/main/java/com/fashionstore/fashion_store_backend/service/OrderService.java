@@ -414,9 +414,8 @@ public class OrderService {
                 throw new RuntimeException("Không thể hủy đơn hàng đã thanh toán");
             }
             
-            // Đặt trạng thái hiện tại thành không active
-            currentStatusDetail.setActive(false);
-            orderStatusDetailRepository.save(currentStatusDetail);
+            // Tắt tất cả các trạng thái đang active của đơn hàng này
+            deactivateAllOrderStatusDetails(order);
             
             // Tạo trạng thái chi tiết mới và lưu vào cơ sở dữ liệu
             OrderStatusDetail newOrderStatusDetail = new OrderStatusDetail();
@@ -440,8 +439,7 @@ public class OrderService {
             // Xử lý cập nhật trạng thái thông thường
             
             // Tắt tất cả các trạng thái đang active của đơn hàng này
-            currentStatusDetail.setActive(false);
-            orderStatusDetailRepository.save(currentStatusDetail);
+            deactivateAllOrderStatusDetails(order);
             
             // Tạo trạng thái chi tiết mới và lưu vào cơ sở dữ liệu
             OrderStatusDetail newOrderStatusDetail = new OrderStatusDetail();
@@ -456,6 +454,7 @@ public class OrderService {
         }
     }
 
+    @Transactional
     public void updateOrderStatusToPaidAndPending(Long orderId, String username) {
         // Tìm đơn hàng theo orderId
         Optional<Order> orderOpt = orderRepository.findById(orderId);
@@ -470,6 +469,9 @@ public class OrderService {
         if (currentStatusDetail == null || !currentStatusDetail.getOrderStatus().getCode().equals("WAITING_FOR_PAYMENT")) {
             throw new RuntimeException("Đơn hàng đã được xử lý");
         }
+
+        // Tắt tất cả các trạng thái đang active của đơn hàng
+        deactivateAllOrderStatusDetails(order);
 
         // Lấy trạng thái "PAID" và "PENDING" từ bảng OrderStatus
         OrderStatus paidStatus = orderStatusRepository.findById("PAID").orElseThrow(() -> new RuntimeException("Trạng thái PAID không tồn tại"));
@@ -549,9 +551,8 @@ public class OrderService {
         }
 
         try {
-            // Đặt trạng thái hiện tại thành không active
-            currentStatusDetail.setActive(false);
-            orderStatusDetailRepository.save(currentStatusDetail);
+            // Tắt tất cả các trạng thái đang active của đơn hàng
+            deactivateAllOrderStatusDetails(order);
 
             // Lấy trạng thái "CANCELLED" từ bảng OrderStatus
             OrderStatus cancelledStatus = orderStatusRepository.findById("CANCELLED")
@@ -739,6 +740,15 @@ public class OrderService {
             // Trả về DTO
             return new OrderResponseDto(order.getId(), order.getOrderDate(), order.getTotal(), currentStatus);
         });
+    }
+
+    // Phương thức để tắt tất cả các trạng thái đang active của đơn hàng
+    private void deactivateAllOrderStatusDetails(Order order) {
+        List<OrderStatusDetail> activeStatusDetails = orderStatusDetailRepository.findByOrderAndIsActiveTrue(order);
+        for (OrderStatusDetail statusDetail : activeStatusDetails) {
+            statusDetail.setActive(false);
+            orderStatusDetailRepository.save(statusDetail);
+        }
     }
 }
 
