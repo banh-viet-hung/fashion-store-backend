@@ -58,6 +58,9 @@ public class OrderService {
     @Autowired
     private OrderStatusDetailRepository orderStatusDetailRepository;
 
+    @Autowired
+    private CouponService couponService;
+
     public Long generateOrderId() {
         return System.currentTimeMillis() + (long) (Math.random() * 100000);
     }
@@ -154,6 +157,26 @@ public class OrderService {
 
         // Tính phí vận chuyển
         total += shippingMethod.getFee();
+        
+        // Xử lý mã giảm giá nếu có
+        double discount = 0;
+        if (orderCreateDto.getCouponCode() != null && !orderCreateDto.getCouponCode().isEmpty()) {
+            try {
+                // Sử dụng couponService để xác thực và lấy giá trị giảm giá
+                discount = couponService.validateCoupon(orderCreateDto.getCouponCode(), total);
+                
+                // Cập nhật discount cho order
+                order.setDiscount(discount);
+                
+                // Giảm tổng tiền sau khi áp dụng mã giảm giá
+                total -= discount;
+            } catch (IllegalArgumentException e) {
+                // Nếu mã giảm giá không hợp lệ, ném lỗi
+                throw new RuntimeException(e.getMessage());
+            }
+        } else {
+            order.setDiscount(0.0); // Không có mã giảm giá
+        }
 
         // Cập nhật lại tổng tiền của đơn hàng
         order.setTotal(total);
@@ -190,6 +213,11 @@ public class OrderService {
         for (Product product : productsToUpdate) {
             product.setQuantity(product.getQuantity() - cart.stream().filter(item -> item.getProductId().equals(product.getId())).mapToInt(CartProductDTO::getQuantity).sum());
             productRepository.save(product);
+        }
+        
+        // Tăng số lượt sử dụng của mã giảm giá nếu đã áp dụng thành công
+        if (orderCreateDto.getCouponCode() != null && !orderCreateDto.getCouponCode().isEmpty()) {
+            couponService.incrementCouponUsage(orderCreateDto.getCouponCode());
         }
 
         return order.getId();

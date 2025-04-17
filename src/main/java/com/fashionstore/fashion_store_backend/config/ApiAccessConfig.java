@@ -25,12 +25,12 @@ public class ApiAccessConfig {
     // Các API yêu cầu vai trò STAFF hoặc ADMIN (Chỉ dành cho STAFF và ADMIN, không
     // phải USER)
     public static final String[] STAFF_ADMIN_API_GET = { "/orders/all", "/orders/user/{userId}", 
-            "/coupons", "/coupons/{id}" };
+            "/coupons/list", "/coupons/get/{id}" };
 
     public static final String[] STAFF_ADMIN_API_POST = { "/orders/{orderId}/update-status", "/products/create",
             "/product-variant/{productId}/variants", "products/{productId}/images", "/products/delete/{productId}",
             "/products/update/{productId}", "/categories/create", "/categories/{id}", "/products/delete-many",
-            "/categories/delete-many", "/coupons", "/coupons/{id}", "/coupons/delete-many" };
+            "/categories/delete-many", "/coupons/create", "/coupons/edit/{id}", "/coupons/delete-many" };
 
     public static final String[] ADMIN_API_GET = { "/user/all", "/user/info/{username}" };
 

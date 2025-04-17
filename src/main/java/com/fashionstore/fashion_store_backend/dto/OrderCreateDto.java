@@ -15,4 +15,5 @@ public class OrderCreateDto {
     private List<CartProductDTO> cart;
     private ShippingDto shipping;
     private String payment;
+    private String couponCode;
 }

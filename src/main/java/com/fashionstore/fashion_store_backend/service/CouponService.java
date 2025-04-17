@@ -67,6 +67,23 @@ public class CouponService {
         return discountAmount;
     }
     
+    /**
+     * Tăng số lượt sử dụng của mã giảm giá sau khi áp dụng thành công
+     * @param code Mã giảm giá
+     * @return true nếu cập nhật thành công, false nếu không
+     */
+    @Transactional
+    public boolean incrementCouponUsage(String code) {
+        Coupon coupon = couponRepository.findByCode(code);
+        if (coupon == null) {
+            return false;
+        }
+        
+        coupon.setUsedCount(coupon.getUsedCount() + 1);
+        couponRepository.save(coupon);
+        return true;
+    }
+    
     // Create a new coupon
     public Coupon createCoupon(CouponDto couponDto) {
         // Check if coupon code already exists

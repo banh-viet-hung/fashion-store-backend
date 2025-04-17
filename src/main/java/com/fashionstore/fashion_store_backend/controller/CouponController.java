@@ -52,7 +52,7 @@ public class CouponController {
     }
     
     // API to get all coupons with pagination and filtering (for ADMIN and STAFF)
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<ApiResponse> getAllCoupons(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -73,7 +73,7 @@ public class CouponController {
     }
     
     // API to get coupon by ID (for ADMIN and STAFF)
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<ApiResponse> getCouponById(@PathVariable Long id) {
         try {
             Coupon coupon = couponService.getCouponById(id);
@@ -88,7 +88,7 @@ public class CouponController {
     }
     
     // API to create a new coupon (for ADMIN and STAFF)
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse> createCoupon(@Valid @RequestBody CouponDto couponDto) {
         try {
             Coupon newCoupon = couponService.createCoupon(couponDto);
@@ -104,7 +104,7 @@ public class CouponController {
     }
     
     // API to update an existing coupon (for ADMIN and STAFF)
-    @PutMapping("/{id}")
+    @PutMapping("/edit/{id}")
     public ResponseEntity<ApiResponse> updateCoupon(@PathVariable Long id, @Valid @RequestBody CouponDto couponDto) {
         try {
             Coupon updatedCoupon = couponService.updateCoupon(id, couponDto);
