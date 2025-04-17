@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -60,6 +61,9 @@ public class OrderService {
 
     @Autowired
     private CouponService couponService;
+
+    @Autowired
+    private CouponRepository couponRepository;
 
     public Long generateOrderId() {
         return System.currentTimeMillis() + (long) (Math.random() * 100000);
@@ -165,8 +169,9 @@ public class OrderService {
                 // Sử dụng couponService để xác thực và lấy giá trị giảm giá
                 discount = couponService.validateCoupon(orderCreateDto.getCouponCode(), total);
                 
-                // Cập nhật discount cho order
+                // Cập nhật discount và couponCode cho order
                 order.setDiscount(discount);
+                order.setCouponCode(orderCreateDto.getCouponCode());
                 
                 // Giảm tổng tiền sau khi áp dụng mã giảm giá
                 total -= discount;
@@ -176,6 +181,7 @@ public class OrderService {
             }
         } else {
             order.setDiscount(0.0); // Không có mã giảm giá
+            order.setCouponCode(null); // Không có mã giảm giá
         }
 
         // Cập nhật lại tổng tiền của đơn hàng
@@ -370,35 +376,84 @@ public class OrderService {
         });
     }
 
+    @Transactional
     public void updateOrderStatus(Long orderId, String statusCode, String username) {
         // Tìm đơn hàng theo ID
         Optional<Order> orderOpt = orderRepository.findById(orderId);
         if (orderOpt.isEmpty()) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("Đơn hàng không tồn tại");
         }
         Order order = orderOpt.get();
 
         // Tìm trạng thái mới theo mã trạng thái (statusCode)
         Optional<OrderStatus> orderStatusOpt = orderStatusRepository.findById(statusCode);
         if (orderStatusOpt.isEmpty()) {
-            throw new RuntimeException("Invalid order status code");
+            throw new RuntimeException("Mã trạng thái đơn hàng không hợp lệ");
         }
         OrderStatus orderStatus = orderStatusOpt.get();
 
-        // Tắt tất cả các trạng thái đang active của đơn hàng này
-        OrderStatusDetail activeStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
-        activeStatusDetail.setActive(false);
-        orderStatusDetailRepository.save(activeStatusDetail);
-        // Tạo trạng thái chi tiết mới và lưu vào cơ sở dữ liệu
-        OrderStatusDetail newOrderStatusDetail = new OrderStatusDetail();
-        newOrderStatusDetail.setOrder(order);
-        newOrderStatusDetail.setOrderStatus(orderStatus);
-        newOrderStatusDetail.setUpdateAt(LocalDateTime.now());
-        newOrderStatusDetail.setUser(userRepository.findByEmail(username)); // Lấy user thực hiện cập nhật trạng thái
-        newOrderStatusDetail.setActive(true);
+        // Lấy trạng thái hiện tại của đơn hàng
+        OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
+        if (currentStatusDetail == null) {
+            throw new RuntimeException("Không thể xác định trạng thái hiện tại của đơn hàng");
+        }
+        String currentStatus = currentStatusDetail.getOrderStatus().getCode();
 
-        // Lưu trạng thái chi tiết mới vào cơ sở dữ liệu
-        orderStatusDetailRepository.save(newOrderStatusDetail);
+        // Xử lý đặc biệt cho trạng thái CANCELLED (hủy đơn hàng)
+        if ("CANCELLED".equals(statusCode)) {
+            // Kiểm tra xem đơn hàng có thể hủy không
+            if (!"WAITING_FOR_PAYMENT".equals(currentStatus) && !"PENDING".equals(currentStatus)) {
+                throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái chờ thanh toán hoặc đang chờ xử lý");
+            }
+
+            // Kiểm tra nếu đơn hàng đã thanh toán
+            boolean hasPaidStatus = order.getOrderStatusDetails().stream()
+                .anyMatch(statusDetail -> "PAID".equals(statusDetail.getOrderStatus().getCode()));
+
+            if (hasPaidStatus) {
+                throw new RuntimeException("Không thể hủy đơn hàng đã thanh toán");
+            }
+            
+            // Đặt trạng thái hiện tại thành không active
+            currentStatusDetail.setActive(false);
+            orderStatusDetailRepository.save(currentStatusDetail);
+            
+            // Tạo trạng thái chi tiết mới và lưu vào cơ sở dữ liệu
+            OrderStatusDetail newOrderStatusDetail = new OrderStatusDetail();
+            newOrderStatusDetail.setOrder(order);
+            newOrderStatusDetail.setOrderStatus(orderStatus);
+            newOrderStatusDetail.setUpdateAt(LocalDateTime.now());
+            newOrderStatusDetail.setUser(userRepository.findByEmail(username));
+            newOrderStatusDetail.setActive(true);
+            
+            // Lưu trạng thái chi tiết mới vào cơ sở dữ liệu
+            orderStatusDetailRepository.save(newOrderStatusDetail);
+            
+            // Khôi phục lại số lượng sản phẩm cho kho
+            restoreProductQuantity(order);
+            
+            // Kiểm tra hoàn trả mã giảm giá nếu có
+            if (order.getCouponCode() != null && !order.getCouponCode().isEmpty()) {
+                decrementCouponUsage(order.getCouponCode());
+            }
+        } else {
+            // Xử lý cập nhật trạng thái thông thường
+            
+            // Tắt tất cả các trạng thái đang active của đơn hàng này
+            currentStatusDetail.setActive(false);
+            orderStatusDetailRepository.save(currentStatusDetail);
+            
+            // Tạo trạng thái chi tiết mới và lưu vào cơ sở dữ liệu
+            OrderStatusDetail newOrderStatusDetail = new OrderStatusDetail();
+            newOrderStatusDetail.setOrder(order);
+            newOrderStatusDetail.setOrderStatus(orderStatus);
+            newOrderStatusDetail.setUpdateAt(LocalDateTime.now());
+            newOrderStatusDetail.setUser(userRepository.findByEmail(username));
+            newOrderStatusDetail.setActive(true);
+            
+            // Lưu trạng thái chi tiết mới vào cơ sở dữ liệu
+            orderStatusDetailRepository.save(newOrderStatusDetail);
+        }
     }
 
     public void updateOrderStatusToPaidAndPending(Long orderId, String username) {
@@ -448,76 +503,103 @@ public class OrderService {
     }
 
     // Hủy đơn hàng theo ID
+    @Transactional
     public void cancelOrder(Long orderId, String username) {
         // Tìm đơn hàng theo ID
         Optional<Order> orderOpt = orderRepository.findById(orderId);
         if (orderOpt.isEmpty()) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("Đơn hàng không tồn tại");
         }
         Order order = orderOpt.get();
 
         // Kiểm tra quyền sở hữu đơn hàng (chủ sở hữu hoặc ADMIN/STAFF)
         if (order.getUser() != null) {
             if (!order.getUser().getEmail().equals(username)) {
-                System.out.println("Order owner: " + order.getUser().getEmail());
                 User user = userRepository.findByEmail(username);
+                if (user == null) {
+                    throw new RuntimeException("Người dùng không tồn tại");
+                }
                 // Nếu không phải chủ sở hữu, kiểm tra vai trò
-                String userRole = user.getRole().getName(); // Giả sử bạn có phương thức để lấy role của user
+                String userRole = user.getRole().getName();
                 if (!userRole.equals("ADMIN") && !userRole.equals("STAFF")) {
-                    System.out.println("User role: " + userRole);
-                    throw new RuntimeException("Unauthorized");
+                    throw new RuntimeException("Bạn không có quyền hủy đơn hàng của người khác");
                 }
             }
         }
 
-        // Lấy danh sách tất cả các OrderStatusDetail của đơn hàng
-        List<OrderStatusDetail> orderStatusDetails = order.getOrderStatusDetails();
+        // Lấy trạng thái hiện tại của đơn hàng
+        OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
+        if (currentStatusDetail == null) {
+            throw new RuntimeException("Không thể xác định trạng thái hiện tại của đơn hàng");
+        }
+        
+        String currentStatus = currentStatusDetail.getOrderStatus().getCode();
 
-        // Kiểm tra nếu danh sách rỗng
-        if (orderStatusDetails.isEmpty()) {
-            throw new RuntimeException("Không có trạng thái đơn hàng nào");
+        // Kiểm tra xem đơn hàng có thể hủy không
+        if (!"WAITING_FOR_PAYMENT".equals(currentStatus) && !"PENDING".equals(currentStatus)) {
+            throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái chờ thanh toán hoặc đang chờ xử lý");
         }
 
-        // Kiểm tra nếu có trạng thái nào là PAID
-        boolean hasPaidStatus = orderStatusDetails.stream().anyMatch(statusDetail -> "PAID".equals(statusDetail.getOrderStatus().getCode()));
+        // Kiểm tra nếu đơn hàng đã thanh toán
+        boolean hasPaidStatus = order.getOrderStatusDetails().stream()
+            .anyMatch(statusDetail -> "PAID".equals(statusDetail.getOrderStatus().getCode()));
 
         if (hasPaidStatus) {
             throw new RuntimeException("Không thể hủy đơn hàng đã thanh toán");
         }
 
-        // Kiểm tra trạng thái hiện tại của đơn hàng
-        OrderStatusDetail currentStatusDetail = orderStatusDetailRepository.findTopByOrderAndIsActiveTrueOrderByUpdateAtDesc(order);
-        String currentStatus = currentStatusDetail.getOrderStatus().getCode();
+        try {
+            // Đặt trạng thái hiện tại thành không active
+            currentStatusDetail.setActive(false);
+            orderStatusDetailRepository.save(currentStatusDetail);
 
-        if (!"WAITING_FOR_PAYMENT".equals(currentStatus) && !"PENDING".equals(currentStatus)) {
-            throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái chờ thanh toán hoặc đang chờ xử lý");
-        }
+            // Lấy trạng thái "CANCELLED" từ bảng OrderStatus
+            OrderStatus cancelledStatus = orderStatusRepository.findById("CANCELLED")
+                .orElseThrow(() -> new RuntimeException("Trạng thái CANCELLED không tồn tại trong hệ thống"));
 
-        // Lấy trạng thái "CANCELLED" từ bảng OrderStatus
-        OrderStatus cancelledStatus = orderStatusRepository.findById("CANCELLED").orElseThrow(() -> new RuntimeException("Trạng thái CANCELLED không tồn tại"));
-
-        // Tạo OrderStatusDetail cho CANCELLED
-        OrderStatusDetail cancelledStatusDetail = new OrderStatusDetail();
-        cancelledStatusDetail.setOrder(order);
-        cancelledStatusDetail.setOrderStatus(cancelledStatus);
-        cancelledStatusDetail.setUpdateAt(LocalDateTime.now());
-        if (username != null) {
+            // Tạo OrderStatusDetail cho CANCELLED
+            OrderStatusDetail cancelledStatusDetail = new OrderStatusDetail();
+            cancelledStatusDetail.setOrder(order);
+            cancelledStatusDetail.setOrderStatus(cancelledStatus);
+            cancelledStatusDetail.setUpdateAt(LocalDateTime.now());
             cancelledStatusDetail.setUser(userRepository.findByEmail(username)); // Người thực hiện thay đổi trạng thái
+            cancelledStatusDetail.setActive(true); // CANCELLED là active
+
+            // Lưu OrderStatusDetail cho CANCELLED
+            orderStatusDetailRepository.save(cancelledStatusDetail);
+
+            // Khôi phục lại số lượng sản phẩm cho kho
+            restoreProductQuantity(order);
+            
+            // Kiểm tra hoàn trả mã giảm giá nếu có
+            if (order.getCouponCode() != null && !order.getCouponCode().isEmpty()) {
+                // Giảm số lượt sử dụng của mã giảm giá
+                decrementCouponUsage(order.getCouponCode());
+            }
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi hủy đơn hàng: " + e.getMessage());
         }
-        cancelledStatusDetail.setActive(true); // CANCELLED là active
-
-        // Lấy danh sách OrderDetail của đơn hàng
+    }
+    
+    // Phương thức riêng để khôi phục số lượng sản phẩm
+    private void restoreProductQuantity(Order order) {
         List<OrderDetail> orderDetails = order.getOrderDetails();
-
-        // Khôi phục lại số lượng cho ProductVariant và Product
+        
         for (OrderDetail orderDetail : orderDetails) {
-            ProductVariant productVariant = productVariantRepository.findByProductIdAndColorAndSize(orderDetail.getProduct().getId(), colorRepository.findByName(orderDetail.getColor()), sizeRepository.findByName(orderDetail.getSize()));
+            // Tìm ProductVariant tương ứng
+            ProductVariant productVariant = productVariantRepository.findByProductIdAndColorAndSize(
+                orderDetail.getProduct().getId(), 
+                colorRepository.findByName(orderDetail.getColor()), 
+                sizeRepository.findByName(orderDetail.getSize())
+            );
 
             if (productVariant != null) {
+                // Tăng số lượng trong ProductVariant
                 productVariant.setQuantity(productVariant.getQuantity() + orderDetail.getQuantity());
                 productVariantRepository.save(productVariant);
             } else {
-                // Tạo mới ProductVariant nếu không tìm thấy
+                // Nếu không tìm thấy ProductVariant hiện có, tạo mới
                 ProductVariant newProductVariant = new ProductVariant();
                 newProductVariant.setProduct(orderDetail.getProduct());
                 newProductVariant.setColor(colorRepository.findByName(orderDetail.getColor()));
@@ -526,14 +608,25 @@ public class OrderService {
                 productVariantRepository.save(newProductVariant);
             }
 
-            // Khôi phục lại số lượng cho Product
+            // Tăng số lượng trong Product
             Product product = orderDetail.getProduct();
             product.setQuantity(product.getQuantity() + orderDetail.getQuantity());
             productRepository.save(product);
         }
-
-        // Lưu OrderStatusDetail cho CANCELLED
-        orderStatusDetailRepository.save(cancelledStatusDetail);
+    }
+    
+    // Phương thức để giảm số lượt sử dụng của mã giảm giá
+    private void decrementCouponUsage(String couponCode) {
+        try {
+            Coupon coupon = couponRepository.findByCode(couponCode);
+            if (coupon != null && coupon.getUsedCount() > 0) {
+                coupon.setUsedCount(coupon.getUsedCount() - 1);
+                couponRepository.save(coupon);
+            }
+        } catch (Exception e) {
+            // Ghi log lỗi nhưng không làm gián đoạn quy trình hủy đơn hàng
+            System.err.println("Lỗi khi giảm số lượt sử dụng mã giảm giá: " + e.getMessage());
+        }
     }
 
     public List<UserOrderResponseDto> getOrdersByUserId(Long userId) {
@@ -648,5 +741,6 @@ public class OrderService {
         });
     }
 }
+
 
 
