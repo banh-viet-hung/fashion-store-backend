@@ -65,6 +65,9 @@ public class OrderService {
     @Autowired
     private CouponRepository couponRepository;
 
+    @Autowired
+    private FeedbackService feedbackService;
+
     public Long generateOrderId() {
         return System.currentTimeMillis() + (long) (Math.random() * 100000);
     }
@@ -451,6 +454,11 @@ public class OrderService {
             
             // Lưu trạng thái chi tiết mới vào cơ sở dữ liệu
             orderStatusDetailRepository.save(newOrderStatusDetail);
+            
+            // Nếu đơn hàng chuyển sang trạng thái "DELIVERED" (Đã giao) thì tạo feedback
+            if ("DELIVERED".equals(statusCode)) {
+                feedbackService.createFeedbacksForDeliveredOrder(order);
+            }
         }
     }
 

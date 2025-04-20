@@ -9,7 +9,7 @@ public class ApiAccessConfig {
             "/role", "/role/**", "/shippingMethod", "/shippingMethod/**", "/size", "/size/**", "/user/check-email",
             "/user/request-password-reset", "/user/reset-password/**", "/product-variant/quantity/**",
             "/products/{productId}", "/user/check-status", "/payment/create-payment-url/{orderId}",
-            "/categories/children/{slug}", "/products/list", "/orderStatus" };
+            "/categories/children/{slug}", "/products/list", "/orderStatus", "/feedback//product/{productId}" };
 
     public static final String[] PUBLIC_API_POST = { "/user/register", "/api/auth/login", "orders/create",
             "/payment/update-status/{orderId}", "/orders/{orderId}/cancel", "/products/filter", "/user/check-email",
@@ -17,10 +17,10 @@ public class ApiAccessConfig {
 
     // Các API yêu cầu vai trò ADMIN, STAFF, USER (Tất cả các role có thể truy cập)
     public static final String[] ADMIN_STAFF_USER_API_GET = { "/user/info", "/address", "/user/avatar-and-fullname",
-            "/user/favorite", "/cart/**", "/orders/list", "/orders/{orderId}" };
+            "/user/favorite", "/cart/**", "/orders/list", "/orders/{orderId}", "/feedback/user" };
 
     public static final String[] ADMIN_STAFF_USER_API_POST = { "/user/update", "/user/change-password", "/address",
-            "/user/update-avatar", "/user/favorite/add/**", "/user/favorite/remove/**", "/cart/**" };
+            "/user/update-avatar", "/user/favorite/add/**", "/user/favorite/remove/**", "/cart/**", "/feedback/update/**" };
 
     // Các API yêu cầu vai trò STAFF hoặc ADMIN (Chỉ dành cho STAFF và ADMIN, không
     // phải USER)

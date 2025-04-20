@@ -16,6 +16,12 @@ public class Feedback {
     // Đánh giá từ 1 đến 5
     private int rating;
 
+    // Màu sắc sản phẩm được đánh giá
+    private String color;
+
+    // Kích thước sản phẩm được đánh giá  
+    private String size;
+
     // Bình luận
     private String comment;
 
@@ -24,6 +30,12 @@ public class Feedback {
 
     // ngày cập nhật feedback
     private LocalDateTime updatedAt;
+
+    // Trạng thái đã được đánh giá/phê duyệt hay chưa
+    private boolean isPublic = false;
+    
+    // Đánh dấu feedback đã được chỉnh sửa
+    private boolean isEdited = false;
 
     // Một feedback thuộc một sản phẩm
     // Quan hệ n-1 với Product
