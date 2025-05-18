@@ -70,7 +70,8 @@ public class UserController {
     }
 
     @PostMapping("/reset-password/{token}")
-    public ResponseEntity<ApiResponse> resetPassword(@PathVariable String token, @Valid @RequestBody ResetPasswordDto resetPasswordDto) {
+    public ResponseEntity<ApiResponse> resetPassword(@PathVariable String token,
+            @Valid @RequestBody ResetPasswordDto resetPasswordDto) {
         if (!resetPasswordDto.getNewPassword().equals(resetPasswordDto.getConfirmPassword())) {
             return ResponseEntity.badRequest().body(new ApiResponse("Mật khẩu và xác nhận mật khẩu không khớp", false));
         }
@@ -198,6 +199,17 @@ public class UserController {
         }
 
         try {
+            // Kiểm tra quyền: STAFF chỉ được xem danh sách USER
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean isStaff = authentication.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthority().equals("STAFF"));
+
+            // Nếu là STAFF nhưng roleName không phải là "USER" thì từ chối quyền truy cập
+            if (isStaff && (roleName == null || !roleName.equals("USER"))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse("Bạn không có quyền xem danh sách này", false));
+            }
+
             Page<UserRspDto> userPage = userService.getAllUsersWithPagination(page, size, email, roleName);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ApiResponse("Danh sách người dùng", true, userPage));
@@ -221,7 +233,8 @@ public class UserController {
     }
 
     @PutMapping("/update-role/{username}")
-    public ResponseEntity<ApiResponse> updateUserRole(@PathVariable String username, @RequestBody Map<String, String> request) {
+    public ResponseEntity<ApiResponse> updateUserRole(@PathVariable String username,
+            @RequestBody Map<String, String> request) {
         String roleName = request.get("role");
 
         if (roleName == null || roleName.isEmpty()) {
@@ -255,7 +268,8 @@ public class UserController {
         // Kiểm tra trạng thái tài khoản của người dùng dựa trên username
         System.out.println("username: " + username);
         boolean isActive = userService.isUserActive(username);
-        String message = isActive ? "Tài khoản đang hoạt động" : "Tài khoản đã bị khóa! Vui lòng liên hệ quản trị viên để biết thêm chi tiết!";
+        String message = isActive ? "Tài khoản đang hoạt động"
+                : "Tài khoản đã bị khóa! Vui lòng liên hệ quản trị viên để biết thêm chi tiết!";
 
         return ResponseEntity.ok(new ApiResponse(message, isActive));
     }
