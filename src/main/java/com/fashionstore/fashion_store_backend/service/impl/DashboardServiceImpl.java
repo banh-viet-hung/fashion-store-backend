@@ -441,8 +441,20 @@ public class DashboardServiceImpl implements DashboardService {
             long count = orderCountMap.get(date);
             double growth = 0;
 
-            if (previousCount != null && previousCount > 0) {
-                growth = ((double) (count - previousCount) / previousCount) * 100;
+            if (previousCount != null) {
+                if (previousCount > 0) {
+                    // Trường hợp bình thường: tính % tăng trưởng
+                    growth = ((double) (count - previousCount) / previousCount) * 100;
+                } else if (count > 0) {
+                    // Trường hợp đặc biệt: khi từ 0 đơn hàng lên có đơn hàng
+                    // Sử dụng "New" hoặc một giá trị lớn để thể hiện sự xuất hiện mới
+                    // Trong ngữ cảnh phân tích kinh doanh, 100% thường được sử dụng
+                    // cho sự tăng trưởng từ 0 lên một giá trị dương
+                    growth = count > 0 ? 100.0 : 0.0;
+                } else {
+                    // Cả hai kỳ đều không có đơn hàng
+                    growth = 0.0;
+                }
             }
 
             result.add(new OrderTrendDto(date, period, count, growth));
