@@ -311,8 +311,8 @@ public class DashboardServiceImpl implements DashboardService {
         // Map để lưu trữ thống kê theo danh mục
         Map<Long, CategorySalesDto> categoryMap = new HashMap<>();
 
-        // Tổng doanh thu để tính phần trăm
-        double totalRevenue = 0;
+        // Tổng doanh thu thực tế không phân chia
+        double totalActualRevenue = 0;
 
         // Xử lý dữ liệu
         for (Order order : orders) {
@@ -320,11 +320,16 @@ public class DashboardServiceImpl implements DashboardService {
                 continue;
 
             for (OrderDetail detail : order.getOrderDetails()) {
-                if (detail.getProduct() == null || detail.getProduct().getCategories() == null)
+                if (detail.getProduct() == null || detail.getProduct().getCategories() == null
+                        || detail.getProduct().getCategories().isEmpty())
                     continue;
 
                 double revenue = detail.getPrice() * detail.getQuantity();
-                totalRevenue += revenue;
+                totalActualRevenue += revenue;
+
+                // Phân bổ doanh thu cho từng danh mục mà sản phẩm thuộc về
+                int categoryCount = detail.getProduct().getCategories().size();
+                double revenuePerCategory = revenue / categoryCount;
 
                 for (Category category : detail.getProduct().getCategories()) {
                     Long categoryId = category.getId();
@@ -333,7 +338,8 @@ public class DashboardServiceImpl implements DashboardService {
                     CategorySalesDto categoryDto = categoryMap.getOrDefault(categoryId,
                             new CategorySalesDto(categoryId, categoryName, 0, 0, 0, 0));
 
-                    categoryDto.setTotalRevenue(categoryDto.getTotalRevenue() + revenue);
+                    // Cộng phần doanh thu được phân bổ cho danh mục này
+                    categoryDto.setTotalRevenue(categoryDto.getTotalRevenue() + revenuePerCategory);
                     categoryDto.setOrderCount(categoryDto.getOrderCount() + 1);
                     categoryDto.setItemCount(categoryDto.getItemCount() + detail.getQuantity());
 
@@ -343,9 +349,10 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         // Tính phần trăm doanh thu
-        if (totalRevenue > 0) {
+        if (totalActualRevenue > 0) {
             for (CategorySalesDto category : categoryMap.values()) {
-                category.setPercentage((category.getTotalRevenue() / totalRevenue) * 100);
+                // Phần trăm dựa trên tổng doanh thu thực tế
+                category.setPercentage((category.getTotalRevenue() / totalActualRevenue) * 100);
             }
         }
 

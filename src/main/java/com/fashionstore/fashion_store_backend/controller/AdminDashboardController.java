@@ -126,11 +126,13 @@ public class AdminDashboardController {
     }
 
     /**
-     * API lấy thống kê doanh thu theo danh mục sản phẩm
+     * API lấy thống kê phân bổ doanh thu theo danh mục sản phẩm
+     * Khi một sản phẩm thuộc nhiều danh mục, doanh thu sẽ được phân bổ đều cho các
+     * danh mục đó
      * 
      * @param startDate Ngày bắt đầu (tùy chọn)
      * @param endDate   Ngày kết thúc (tùy chọn)
-     * @return Danh sách doanh thu theo danh mục
+     * @return Danh sách phân bổ doanh thu theo danh mục
      */
     @GetMapping("/sales/by-category")
     public ResponseEntity<ApiResponse> getSalesByCategory(
@@ -138,7 +140,7 @@ public class AdminDashboardController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
         try {
             List<CategorySalesDto> categorySales = dashboardService.getSalesByCategory(startDate, endDate);
-            return ResponseEntity.ok(new ApiResponse("Doanh thu theo danh mục", true, categorySales));
+            return ResponseEntity.ok(new ApiResponse("Thống kê phân bổ doanh thu theo danh mục", true, categorySales));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(e.getMessage(), false));
