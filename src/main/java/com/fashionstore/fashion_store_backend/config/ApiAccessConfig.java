@@ -40,7 +40,9 @@ public class ApiAccessConfig {
                         "/products/delete-many",
                         "/categories/delete-many", "/coupons/create", "/coupons/edit/{id}", "/coupons/delete-many" };
 
-        public static final String[] ADMIN_API_GET = { "/user/info/{username}" };
+        public static final String[] ADMIN_API_GET = { "/user/info/{username}", "/dashboard/**",
+                        "/dashboard/statistics/**",
+                        "/dashboard/sales/**", "/dashboard/orders/**", "/dashboard/inventory/**" };
 
         public static final String[] ADMIN_API_POST = { "/user/update-role/{username}",
                         "/user/change-status/{username}",
