@@ -25,4 +25,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     // Thêm phương thức tìm danh mục theo danh sách slug
     List<Category> findBySlugIn(List<String> slugs);
+
+    // Tìm kiếm danh mục theo trạng thái deleted
+    List<Category> findByDeleted(boolean deleted);
 }

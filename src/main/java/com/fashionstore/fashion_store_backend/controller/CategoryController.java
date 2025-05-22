@@ -75,6 +75,33 @@ public class CategoryController {
         }
     }
 
+    @PostMapping("/restore/{id}")
+    public ResponseEntity<ApiResponse> restoreCategory(@PathVariable("id") Long id) {
+        try {
+            categoryService.restoreCategory(id);
+            return ResponseEntity.ok(new ApiResponse("Khôi phục danh mục thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse> getDeletedCategories() {
+        try {
+            List<Category> deletedCategories = categoryService.getDeletedCategories();
+
+            // Chuyển đổi danh sách Category thành danh sách CategoryResponseDto
+            List<CategoryResponseDto> responseDtos = deletedCategories.stream()
+                    .map(category -> new CategoryResponseDto(category.getId(), category.getName(), category.getSlug()))
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(new ApiResponse("Lấy danh sách danh mục đã xóa thành công", true, responseDtos));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(e.getMessage(), false));
+        }
+    }
 
     @GetMapping("/children/{slug}")
     public ResponseEntity<ApiResponse> getChildCategoriesBySlug(@PathVariable("slug") String slug) {
@@ -92,5 +119,4 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
-
 }

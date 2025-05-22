@@ -53,7 +53,8 @@ public class CategoryService {
         categoryRepository.save(existingCategory);
     }
 
-    // Phương thức xóa danh mục
+    // Phương thức xóa mềm danh mục
+    @Transactional
     public void deleteCategory(Long id) {
         // Tìm category theo id
         Category category = categoryRepository.findById(id)
@@ -61,12 +62,15 @@ public class CategoryService {
 
         // Xóa mối quan hệ giữa Category và Product
         for (Product product : category.getProducts()) {
-            product.getCategories().remove(category);  // Xóa mối quan hệ trong Product
-            productRepository.save(product);  // Lưu lại Product sau khi xóa mối quan hệ
+            product.getCategories().remove(category); // Xóa mối quan hệ trong Product
+            productRepository.save(product); // Lưu lại Product sau khi xóa mối quan hệ
         }
 
-        // Xóa Category
-        categoryRepository.delete(category);  // Xóa danh mục khỏi cơ sở dữ liệu
+        // Đánh dấu đã xóa
+        category.setDeleted(true);
+
+        // Lưu lại thay đổi
+        categoryRepository.save(category);
     }
 
     @Transactional
@@ -77,13 +81,34 @@ public class CategoryService {
 
             // Xóa mối quan hệ giữa Category và Product
             for (Product product : category.getProducts()) {
-                product.getCategories().remove(category);
-                productRepository.save(product);
+                product.getCategories().remove(category); // Xóa mối quan hệ trong Product
+                productRepository.save(product); // Lưu lại Product sau khi xóa mối quan hệ
             }
 
-            // Xóa Category
-            categoryRepository.delete(category);
+            // Đánh dấu đã xóa
+            category.setDeleted(true);
+
+            // Lưu lại thay đổi
+            categoryRepository.save(category);
         }
+    }
+
+    @Transactional
+    public void restoreCategory(Long id) {
+        // Tìm category theo id
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
+
+        // Kiểm tra xem danh mục đã bị xóa hay chưa
+        if (!category.isDeleted()) {
+            throw new RuntimeException("Danh mục chưa bị xóa");
+        }
+
+        // Đánh dấu chưa xóa
+        category.setDeleted(false);
+
+        // Lưu lại thay đổi
+        categoryRepository.save(category);
     }
 
     public List<Category> getChildCategoriesBySlug(String slug) {
@@ -97,4 +122,8 @@ public class CategoryService {
         return parentCategory.getChildCategories();
     }
 
+    // Phương thức lấy danh sách các category đã bị xóa mềm
+    public List<Category> getDeletedCategories() {
+        return categoryRepository.findByDeleted(true);
+    }
 }
