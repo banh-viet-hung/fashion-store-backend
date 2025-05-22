@@ -35,7 +35,7 @@ public class ApiAccessConfig {
 
         public static final String[] STAFF_ADMIN_API_POST = { "/orders/{orderId}/update-status", "/products/create",
                         "/product-variant/{productId}/variants", "products/{productId}/images",
-                        "/products/delete/{productId}",
+                        "/products/delete/{productId}", "/products/restore/{productId}",
                         "/products/update/{productId}", "/categories/create", "/categories/{id}",
                         "/products/delete-many",
                         "/categories/delete-many", "/coupons/create", "/coupons/edit/{id}", "/coupons/delete-many" };

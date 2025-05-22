@@ -29,7 +29,8 @@ public class ProductController {
         try {
             // Gọi service để tạo mới sản phẩm
             Long product = productService.createProduct(productDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Tạo sản phẩm thành công", true, product));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse("Tạo sản phẩm thành công", true, product));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
@@ -37,27 +38,30 @@ public class ProductController {
 
     // API tạo ảnh cho sản phẩm
     @PostMapping("/{productId}/images")
-    public ResponseEntity<ApiResponse> createProductImages(@PathVariable Long productId, @RequestBody ProductImagesCreateDto requestDto) {
+    public ResponseEntity<ApiResponse> createProductImages(@PathVariable Long productId,
+            @RequestBody ProductImagesCreateDto requestDto) {
         try {
             // Gọi service để tạo ảnh
             imageService.createProductImages(productId, requestDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Tạo ảnh cho sản phẩm thành công", true));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse("Tạo ảnh cho sản phẩm thành công", true));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
 
     @PutMapping("/{productId}/images")
-    public ResponseEntity<ApiResponse> updateProductImages(@PathVariable Long productId, @RequestBody ProductImagesCreateDto requestDto) {
+    public ResponseEntity<ApiResponse> updateProductImages(@PathVariable Long productId,
+            @RequestBody ProductImagesCreateDto requestDto) {
         try {
             // Gọi service để cập nhật lại hình ảnh
             imageService.updateProductImages(productId, requestDto);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Cập nhật ảnh cho sản phẩm thành công", true));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Cập nhật ảnh cho sản phẩm thành công", true));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
-
 
     @DeleteMapping("/delete/{productId}")
     public ResponseEntity<ApiResponse> softDeleteProduct(@PathVariable Long productId) {
@@ -79,23 +83,36 @@ public class ProductController {
         }
     }
 
+    @PostMapping("/restore/{productId}")
+    public ResponseEntity<ApiResponse> restoreProduct(@PathVariable Long productId) {
+        try {
+            productService.restoreProduct(productId);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Khôi phục sản phẩm thành công", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable Long productId) {
         try {
             // Gọi service để lấy thông tin sản phẩm
             ProductResponseDto productResponseDto = productService.getProductById(productId);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Lấy thông tin sản phẩm thành công", true, productResponseDto));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Lấy thông tin sản phẩm thành công", true, productResponseDto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(e.getMessage(), false));
         }
     }
 
     @PutMapping("/update/{productId}")
-    public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId, @Valid @RequestBody ProductCreateDto productDTO) {
+    public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long productId,
+            @Valid @RequestBody ProductCreateDto productDTO) {
         try {
             // Gọi service để cập nhật sản phẩm
             Long updateProductId = productService.updateProduct(productId, productDTO);
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Cập nhật sản phẩm thành công", true, updateProductId));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Cập nhật sản phẩm thành công", true, updateProductId));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
@@ -113,21 +130,22 @@ public class ProductController {
                     filterRequest.getMaxPrice(),
                     filterRequest.getPage(),
                     filterRequest.getSize(),
-                    filterRequest.getSortBy()  // Thêm tham số sắp xếp
+                    filterRequest.getSortBy() // Thêm tham số sắp xếp
             );
 
             // Kiểm tra nếu danh sách sản phẩm trống
             if (productsPage.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Không có sản phẩm phù hợp với điều kiện lọc", true, productsPage));
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ApiResponse("Không có sản phẩm phù hợp với điều kiện lọc", true, productsPage));
             }
 
             // Trả về API response với dữ liệu phân trang khi có sản phẩm
-            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Lấy sản phẩm thành công", true, productsPage));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse("Lấy sản phẩm thành công", true, productsPage));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(e.getMessage(), false));
         }
     }
-
 
     @GetMapping("/list")
     public ResponseEntity<ApiResponse> getProductList(

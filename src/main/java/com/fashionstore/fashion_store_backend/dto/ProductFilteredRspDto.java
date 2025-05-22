@@ -14,6 +14,7 @@ public class ProductFilteredRspDto {
     private String brand;
     private int quantity;
     private String thumbnailUrl;
+    private boolean deleted;
 
     public ProductFilteredRspDto(Product product) {
         this.id = product.getId();
@@ -23,7 +24,7 @@ public class ProductFilteredRspDto {
         this.description = product.getDescription();
         this.brand = product.getBrand();
         this.quantity = product.getQuantity();
-
+        this.deleted = product.isDeleted();
         // Lấy hình ảnh đại diện (ưu tiên thumbnail)
         this.thumbnailUrl = product.getImages().stream()
                 .filter(Image::isThumbnail)

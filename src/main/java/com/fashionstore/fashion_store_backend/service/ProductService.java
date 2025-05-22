@@ -318,4 +318,25 @@ public class ProductService {
         return new PageImpl<>(productDtos, pageable, productsPage.getTotalElements());
     }
 
+    @Transactional
+    public void restoreProduct(Long productId) {
+        // Lấy sản phẩm theo ID
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
+
+        // Kiểm tra nếu sản phẩm không trong trạng thái đã xóa
+        if (!product.isDeleted()) {
+            throw new IllegalArgumentException("Sản phẩm chưa bị xóa");
+        }
+
+        // Đánh dấu sản phẩm là chưa bị xóa
+        product.setDeleted(false);
+
+        // Cập nhật thời gian chỉnh sửa
+        product.setUpdatedAt(LocalDateTime.now());
+
+        // Lưu sản phẩm sau khi thay đổi
+        productRepository.save(product);
+    }
+
 }
