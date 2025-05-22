@@ -12,7 +12,6 @@ import com.fashionstore.fashion_store_backend.model.Feedback;
 import com.fashionstore.fashion_store_backend.model.OrderDetail;
 import com.fashionstore.fashion_store_backend.model.FavoriteProduct;
 import com.fashionstore.fashion_store_backend.model.CartProduct;
-import com.fashionstore.fashion_store_backend.model.Feature;
 
 @Configuration
 public class WebConfig {
@@ -29,8 +28,6 @@ public class WebConfig {
                 Feedback.class,
                 OrderDetail.class,
                 FavoriteProduct.class,
-                CartProduct.class,
-                Feature.class
-        );
+                CartProduct.class);
     }
 }

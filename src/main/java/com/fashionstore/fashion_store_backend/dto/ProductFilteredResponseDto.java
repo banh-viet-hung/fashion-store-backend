@@ -17,7 +17,6 @@ public class ProductFilteredResponseDto {
     private double salePrice;
     private double averageRating;
     private String description;
-    private String detail;
     private String brand;
     private int quantity;
     private boolean deleted;
@@ -32,7 +31,6 @@ public class ProductFilteredResponseDto {
         this.salePrice = product.getSalePrice();
         this.averageRating = product.getAverageRating();
         this.description = product.getDescription();
-        this.detail = product.getDetail();
         this.brand = product.getBrand();
         this.quantity = product.getQuantity();
         this.deleted = product.isDeleted();
