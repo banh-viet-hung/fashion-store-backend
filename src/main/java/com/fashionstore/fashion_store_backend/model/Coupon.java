@@ -35,6 +35,10 @@ public class Coupon {
     private int usedCount;
     private double minOrderValue;
 
+    // Thêm trường maxDiscountAmount để giới hạn số tiền giảm tối đa cho mã giảm
+    // theo %
+    private Double maxDiscountAmount;
+
     public enum DiscountType {
         FIXED, PERCENT
     }

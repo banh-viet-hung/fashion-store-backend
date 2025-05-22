@@ -57,6 +57,12 @@ public class CouponService {
             discountAmount = coupon.getDiscountValue();
         } else if (coupon.getDiscountType() == Coupon.DiscountType.PERCENT) {
             discountAmount = orderValue * (coupon.getDiscountValue() / 100);
+
+            // Áp dụng giới hạn giảm giá tối đa cho mã giảm theo %
+            if (coupon.getMaxDiscountAmount() != null && coupon.getMaxDiscountAmount() > 0
+                    && discountAmount > coupon.getMaxDiscountAmount()) {
+                discountAmount = coupon.getMaxDiscountAmount();
+            }
         }
 
         // Make sure discount amount doesn't exceed order value
@@ -66,9 +72,10 @@ public class CouponService {
 
         return discountAmount;
     }
-    
+
     /**
      * Tăng số lượt sử dụng của mã giảm giá sau khi áp dụng thành công
+     * 
      * @param code Mã giảm giá
      * @return true nếu cập nhật thành công, false nếu không
      */
@@ -78,12 +85,12 @@ public class CouponService {
         if (coupon == null) {
             return false;
         }
-        
+
         coupon.setUsedCount(coupon.getUsedCount() + 1);
         couponRepository.save(coupon);
         return true;
     }
-    
+
     // Create a new coupon
     public Coupon createCoupon(CouponDto couponDto) {
         // Check if coupon code already exists
@@ -91,12 +98,19 @@ public class CouponService {
         if (existingCoupon != null) {
             throw new IllegalArgumentException("Mã giảm giá này đã tồn tại");
         }
-        
+
         // Validate dates
         if (couponDto.getEndDate().isBefore(couponDto.getStartDate())) {
             throw new IllegalArgumentException("Ngày kết thúc không thể trước ngày bắt đầu");
         }
-        
+
+        // Kiểm tra giá trị giảm tối đa cho mã giảm theo %
+        if (couponDto.getDiscountType() == Coupon.DiscountType.PERCENT) {
+            if (couponDto.getMaxDiscountAmount() == null || couponDto.getMaxDiscountAmount() <= 0) {
+                throw new IllegalArgumentException("Mã giảm giá theo % cần có giá trị giảm tối đa");
+            }
+        }
+
         // Create new coupon from DTO
         Coupon newCoupon = new Coupon();
         newCoupon.setCode(couponDto.getCode());
@@ -108,16 +122,17 @@ public class CouponService {
         newCoupon.setUsageLimit(couponDto.getUsageLimit() != null ? couponDto.getUsageLimit() : 0);
         newCoupon.setUsedCount(0); // Initialize used count as 0
         newCoupon.setMinOrderValue(couponDto.getMinOrderValue() != null ? couponDto.getMinOrderValue() : 0);
-        
+        newCoupon.setMaxDiscountAmount(couponDto.getMaxDiscountAmount());
+
         return couponRepository.save(newCoupon);
     }
-    
+
     // Update an existing coupon
     public Coupon updateCoupon(Long id, CouponDto couponDto) {
         // Check if coupon exists
         Coupon existingCoupon = couponRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá với ID: " + id));
-        
+
         // If code is changed, check if new code already exists
         if (!existingCoupon.getCode().equals(couponDto.getCode())) {
             Coupon codeCheck = couponRepository.findByCode(couponDto.getCode());
@@ -125,12 +140,19 @@ public class CouponService {
                 throw new IllegalArgumentException("Mã giảm giá này đã tồn tại");
             }
         }
-        
+
         // Validate dates
         if (couponDto.getEndDate().isBefore(couponDto.getStartDate())) {
             throw new IllegalArgumentException("Ngày kết thúc không thể trước ngày bắt đầu");
         }
-        
+
+        // Kiểm tra giá trị giảm tối đa cho mã giảm theo %
+        if (couponDto.getDiscountType() == Coupon.DiscountType.PERCENT) {
+            if (couponDto.getMaxDiscountAmount() == null || couponDto.getMaxDiscountAmount() <= 0) {
+                throw new IllegalArgumentException("Mã giảm giá theo % cần có giá trị giảm tối đa");
+            }
+        }
+
         // Update coupon
         existingCoupon.setCode(couponDto.getCode());
         existingCoupon.setDescription(couponDto.getDescription());
@@ -140,55 +162,55 @@ public class CouponService {
         existingCoupon.setEndDate(couponDto.getEndDate());
         existingCoupon.setUsageLimit(couponDto.getUsageLimit() != null ? couponDto.getUsageLimit() : 0);
         existingCoupon.setMinOrderValue(couponDto.getMinOrderValue() != null ? couponDto.getMinOrderValue() : 0);
-        
+        existingCoupon.setMaxDiscountAmount(couponDto.getMaxDiscountAmount());
+
         return couponRepository.save(existingCoupon);
     }
-    
+
     // Get coupon by ID
     public Coupon getCouponById(Long id) {
         return couponRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá với ID: " + id));
     }
-    
+
     // Get all coupons
     public List<Coupon> getAllCoupons() {
         return couponRepository.findAll();
     }
-    
+
     // Get coupons with pagination and filtering
     public Page<Coupon> getCouponsWithPagination(int page, int size, CouponFilterRequestDto filterDto) {
         // Tạo Pageable với phân trang và sắp xếp theo ID giảm dần
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("id")));
-        
+
         // Tạo Specification để áp dụng điều kiện lọc
         Specification<Coupon> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            
+
             // Lọc theo mã giảm giá nếu có
             if (filterDto.getCode() != null && !filterDto.getCode().isEmpty()) {
                 predicates.add(criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("code")), 
-                    "%" + filterDto.getCode().toLowerCase() + "%"
-                ));
+                        criteriaBuilder.lower(root.get("code")),
+                        "%" + filterDto.getCode().toLowerCase() + "%"));
             }
-            
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
-        
+
         // Lấy danh sách mã giảm giá từ database dựa trên các điều kiện lọc
         return couponRepository.findAll(specification, pageable);
     }
-    
+
     // Xóa một coupon
     public void deleteCoupon(Long id) {
         // Kiểm tra xem coupon có tồn tại không
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá với ID: " + id));
-        
+
         // Xóa coupon
         couponRepository.delete(coupon);
     }
-    
+
     // Xóa nhiều coupon
     @Transactional
     public void deleteManyCoupons(List<Long> ids) {
@@ -196,7 +218,7 @@ public class CouponService {
             // Kiểm tra xem coupon có tồn tại không
             Coupon coupon = couponRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá với ID: " + id));
-            
+
             // Xóa coupon
             couponRepository.delete(coupon);
         }
