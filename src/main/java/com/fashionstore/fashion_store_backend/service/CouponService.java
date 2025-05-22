@@ -61,6 +61,7 @@ public class CouponService {
             // Áp dụng giới hạn giảm giá tối đa cho mã giảm theo %
             if (coupon.getMaxDiscountAmount() != null && coupon.getMaxDiscountAmount() > 0
                     && discountAmount > coupon.getMaxDiscountAmount()) {
+                System.out.println("Áp dụng giới hạn giảm giá tối đa: " + coupon.getMaxDiscountAmount());
                 discountAmount = coupon.getMaxDiscountAmount();
             }
         }

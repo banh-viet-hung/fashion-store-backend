@@ -186,8 +186,9 @@ public class UserController {
     public ResponseEntity<ApiResponse> getAllUsersWithPagination(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String roleName) {
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String roleName,
+            @RequestParam(required = false) Boolean isActive) {
 
         if (page < 1) {
             return ResponseEntity.badRequest()
@@ -210,7 +211,8 @@ public class UserController {
                         .body(new ApiResponse("Bạn không có quyền xem danh sách này", false));
             }
 
-            Page<UserRspDto> userPage = userService.getAllUsersWithPagination(page, size, email, roleName);
+            Page<UserRspDto> userPage = userService.getAllUsersWithPagination(page, size, searchTerm, roleName,
+                    isActive);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ApiResponse("Danh sách người dùng", true, userPage));
         } catch (Exception e) {

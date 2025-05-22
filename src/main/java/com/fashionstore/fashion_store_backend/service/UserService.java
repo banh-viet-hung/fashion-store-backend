@@ -119,7 +119,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-
     public UserAvatarDto getUserAvatarAndFullName(String email) {
         User user = userRepository.findByEmail(email);
         if (user == null) {
@@ -139,17 +138,26 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public Page<UserRspDto> getAllUsersWithPagination(int page, int size, String email, String roleName) {
+    public Page<UserRspDto> getAllUsersWithPagination(int page, int size, String searchTerm, String roleName,
+            Boolean isActive) {
         Pageable pageable = PageRequest.of(page - 1, size); // Page bắt đầu từ 0 trong Spring Data
 
         Specification<User> spec = Specification.where(null);
 
-        if (email != null && !email.trim().isEmpty()) {
-            spec = spec.and((root, query, cb) -> cb.like(root.get("email"), "%" + email.trim() + "%"));
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            // Tìm kiếm theo email, hoặc fullName, hoặc phoneNumber
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(root.get("email"), "%" + searchTerm.trim() + "%"),
+                    cb.like(root.get("fullName"), "%" + searchTerm.trim() + "%"),
+                    cb.like(root.get("phoneNumber"), "%" + searchTerm.trim() + "%")));
         }
 
         if (roleName != null && !roleName.trim().isEmpty()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("role").get("name"), roleName.trim()));
+        }
+
+        if (isActive != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("isActive"), isActive));
         }
 
         Page<User> userPage = userRepository.findAll(spec, pageable);
@@ -172,13 +180,14 @@ public class UserService {
     }
 
     public UserResponseDto getUserInfoByUsername(String username) {
-        User user = userRepository.findByEmail(username);  // Hoặc dùng findByUsername nếu có cột username
+        User user = userRepository.findByEmail(username); // Hoặc dùng findByUsername nếu có cột username
         if (user == null) {
             throw new UsernameNotFoundException("Người dùng không tồn tại");
         }
 
         // Chuyển đổi đối tượng User thành UserResponseDto
-        return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(), user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật", user.isActive());
+        return new UserResponseDto(user.getFullName(), user.getAvatar(), user.getEmail(), user.getPhoneNumber(),
+                user.getRole() != null ? user.getRole().getName() : "Chưa cập nhật", user.isActive());
     }
 
     public void updateUserRole(String username, String roleName) {
@@ -217,11 +226,11 @@ public class UserService {
     }
 
     public boolean isUserActive(String username) {
-        User user = userRepository.findByEmail(username);  // Hoặc sử dụng email nếu username là email
+        User user = userRepository.findByEmail(username); // Hoặc sử dụng email nếu username là email
         if (user == null) {
             throw new UsernameNotFoundException("Người dùng không tồn tại");
         }
-        return user != null && user.isActive();  // Trả về trạng thái isActive của người dùng
+        return user != null && user.isActive(); // Trả về trạng thái isActive của người dùng
     }
 
     @Transactional
