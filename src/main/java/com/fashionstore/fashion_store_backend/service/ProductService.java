@@ -32,8 +32,8 @@ public class ProductService {
     private SizeRepository sizeRepository;
 
     @Autowired
-    private ProductVariantRepository productVariantRepository;
-    ;
+    private ProductVariantRepository productVariantRepository;;
+
     // Tìm sản phẩm theo ID
     public Product findById(Long productId) {
         return productRepository.findById(productId).orElse(null);
@@ -138,15 +138,15 @@ public class ProductService {
         // Lấy danh sách các variant của sản phẩm
         List<ProductVariantResponseDto> variants = product.getVariants().stream()
                 .map(variant -> {
-                    // Kiểm tra nếu size và color không null thì lấy tên, nếu null thì gán "Chưa có size" hoặc "Chưa có màu"
+                    // Kiểm tra nếu size và color không null thì lấy tên, nếu null thì gán "Chưa có
+                    // size" hoặc "Chưa có màu"
                     String sizeName = (variant.getSize() != null) ? variant.getSize().getName() : null;
                     String colorName = (variant.getColor() != null) ? variant.getColor().getName() : null;
 
                     return new ProductVariantResponseDto(
-                            colorName,  // Nếu color là null, sẽ trả về "Chưa có màu"
-                            sizeName,   // Nếu size là null, sẽ trả về "Chưa có size"
-                            variant.getQuantity()
-                    );
+                            colorName, // Nếu color là null, sẽ trả về "Chưa có màu"
+                            sizeName, // Nếu size là null, sẽ trả về "Chưa có size"
+                            variant.getQuantity());
                 })
                 .collect(Collectors.toList());
 
@@ -159,8 +159,7 @@ public class ProductService {
                 categorySlugs,
                 colorNames,
                 sizeNames,
-                variants
-        );
+                variants);
     }
 
     public Long updateProduct(Long productId, ProductCreateDto productDTO) throws Exception {
@@ -229,8 +228,7 @@ public class ProductService {
                 pageRequest,
                 categorySlugsCount,
                 colorNamesCount,
-                sizeNamesCount
-        );
+                sizeNamesCount);
 
         // Kiểm tra nếu danh sách sản phẩm trống
         if (productsPage.isEmpty()) {
@@ -246,6 +244,7 @@ public class ProductService {
         // Trả về một Page với kết quả phân trang
         return new PageImpl<>(productDtos, pageRequest, productsPage.getTotalElements());
     }
+
     private Sort getSortByCriteria(String sortBy) {
         // Nếu sortBy null, trả về mặc định: không sắp xếp
         if (sortBy == null) {
@@ -256,16 +255,13 @@ public class ProductService {
         Map<String, Sort> sortMap = new HashMap<>();
         sortMap.put("priceAsc", Sort.by(
                 Sort.Order.asc("salePrice").nullsLast(),
-                Sort.Order.asc("price")
-        ));
+                Sort.Order.asc("price")));
         sortMap.put("priceDesc", Sort.by(
                 Sort.Order.desc("salePrice").nullsLast(),
-                Sort.Order.desc("price")
-        ));
+                Sort.Order.desc("price")));
         sortMap.put("newest", Sort.by(
                 Sort.Order.desc("updatedAt"),
-                Sort.Order.desc("createdAt")
-        ));
+                Sort.Order.desc("createdAt")));
 
         // Nếu sortBy có trong Map, trả về giá trị tương ứng, nếu không trả về mặc định
         return sortMap.getOrDefault(sortBy, Sort.unsorted());
@@ -283,29 +279,32 @@ public class ProductService {
         if (categorySlug != null && !categorySlug.isEmpty()) {
             Category category = categoryRepository.findBySlug(categorySlug)
                     .orElseThrow(() -> new IllegalArgumentException("Danh mục không tồn tại"));
-            spec = spec.and((root, query, cb) ->
-                    cb.isMember(category, root.get("categories")));
+            spec = spec.and((root, query, cb) -> cb.isMember(category, root.get("categories")));
         }
 
         // Lọc theo title (tên sản phẩm)
         if (title != null && !title.isEmpty()) {
-            spec = spec.and((root, query, cb) ->
-                    cb.like(cb.lower(root.get("name")), "%" + title.toLowerCase() + "%"));
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + title.toLowerCase() + "%"));
         }
 
-        // Lọc theo status (còn hàng hay hết hàng)
+        // Lọc theo status (còn hàng, hết hàng, đã xóa)
         if (status != null && !status.isEmpty()) {
             if (status.equalsIgnoreCase("con_hang")) {
                 spec = spec.and((root, query, cb) -> cb.greaterThan(root.get("quantity"), 0));
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("deleted")));
             } else if (status.equalsIgnoreCase("het_hang")) {
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("quantity"), 0));
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("deleted")));
+            } else if (status.equalsIgnoreCase("da_xoa")) {
+                spec = spec.and((root, query, cb) -> cb.isTrue(root.get("deleted")));
             } else {
-                throw new IllegalArgumentException("Giá trị status không hợp lệ. Chỉ chấp nhận 'con_hang' hoặc 'het_hang'.");
+                throw new IllegalArgumentException(
+                        "Giá trị status không hợp lệ. Chỉ chấp nhận 'con_hang', 'het_hang' hoặc 'da_xoa'.");
             }
+        } else {
+            // Chỉ lấy các sản phẩm chưa bị xóa nếu không truyền status
+            spec = spec.and((root, query, cb) -> cb.isFalse(root.get("deleted")));
         }
-
-        // Chỉ lấy các sản phẩm chưa bị xóa
-        spec = spec.and((root, query, cb) -> cb.isFalse(root.get("deleted")));
 
         // Thực hiện truy vấn với Specification và Pageable
         Page<Product> productsPage = productRepository.findAll(spec, pageable);
