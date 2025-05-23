@@ -26,11 +26,14 @@ public class OrderStatusDetail {
     // Thời gian cập nhật trạng thái
     private LocalDateTime updateAt;
 
-    // Chi  tiết trạng thái này được cập nhật bởi một nhân viên hoặc một người dùng
+    // Chi tiết trạng thái này được cập nhật bởi một nhân viên hoặc một người dùng
     // Quan hệ n-1 với User
     @ManyToOne
     private User user;
 
     // Trạng thái đang hoạt động hay không
     private boolean isActive;
+
+    // Lý do hủy đơn hàng (chỉ có giá trị khi trạng thái là CANCELLED)
+    private String cancelReason;
 }

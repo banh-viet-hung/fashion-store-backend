@@ -11,4 +11,5 @@ public class OrderStatusResponseDto {
     private LocalDateTime updateAt;
     private String updatedBy;
     private boolean active;
+    private String cancelReason;
 }

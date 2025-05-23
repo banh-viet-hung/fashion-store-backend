@@ -50,7 +50,8 @@ public class OrderController {
         }
 
         try {
-            List<OrderResponseDto> orders = orderService.getOrdersByUsername(username); // Gọi service để lấy danh sách đơn hàng
+            List<OrderResponseDto> orders = orderService.getOrdersByUsername(username); // Gọi service để lấy danh sách
+                                                                                        // đơn hàng
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ApiResponse("Danh sách đơn hàng của người dùng", true, orders));
         } catch (Exception e) {
@@ -75,7 +76,7 @@ public class OrderController {
     // Thêm API phân trang vào OrderController
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllOrdersWithPagination(@RequestParam(defaultValue = "1") int page,
-                                                                  @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size) {
         try {
 
             // Gọi service để lấy danh sách đơn hàng phân trang
@@ -93,12 +94,13 @@ public class OrderController {
     // API để tạo trạng thái chi tiết đơn hàng mới
     @PostMapping("/{orderId}/update-status")
     public ResponseEntity<ApiResponse> updateOrderStatus(@PathVariable Long orderId,
-                                                         @RequestParam String statusCode) {
+            @RequestParam String statusCode,
+            @RequestParam(required = false) String cancelReason) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication != null ? authentication.getName() : null;
 
         try {
-            orderService.updateOrderStatus(orderId, statusCode, username);
+            orderService.updateOrderStatus(orderId, statusCode, username, cancelReason);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ApiResponse("Trạng thái chi tiết đơn hàng đã được cập nhật thành công", true));
         } catch (Exception e) {
@@ -106,7 +108,6 @@ public class OrderController {
                     .body(new ApiResponse(e.getMessage(), false));
         }
     }
-
 
     // Hủy đơn hàng theo ID
     @DeleteMapping("/{orderId}/cancel")
