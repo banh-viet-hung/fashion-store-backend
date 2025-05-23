@@ -36,6 +36,11 @@ public class Product {
     // updatedAt: thời gian cập nhật sản phẩm
     private LocalDateTime updatedAt;
 
+    // updatedBy: người cập nhật sản phẩm gần nhất
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    private User updatedBy;
+
     // Đã xóa
     private boolean deleted;
 

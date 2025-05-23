@@ -7,6 +7,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,11 +34,24 @@ public class ProductService {
     private SizeRepository sizeRepository;
 
     @Autowired
-    private ProductVariantRepository productVariantRepository;;
+    private ProductVariantRepository productVariantRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // Tìm sản phẩm theo ID
     public Product findById(Long productId) {
         return productRepository.findById(productId).orElse(null);
+    }
+
+    // Lấy người dùng hiện tại từ SecurityContext
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            return userRepository.findByEmail(username);
+        }
+        return null;
     }
 
     // Hàm tạo mới sản phẩm
@@ -48,7 +63,14 @@ public class ProductService {
         product.setPrice(productDTO.getPrice());
         product.setSalePrice(productDTO.getSalePrice() > 0 ? productDTO.getSalePrice() : 0);
         product.setCreatedAt(LocalDateTime.now());
+        product.setUpdatedAt(LocalDateTime.now());
         product.setDeleted(false);
+
+        // Lưu thông tin người tạo sản phẩm
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            product.setUpdatedBy(currentUser);
+        }
 
         // Lấy danh sách Category từ slug
         List<Category> categories = categoryRepository.findBySlugIn(productDTO.getCategorySlugs());
@@ -86,6 +108,13 @@ public class ProductService {
 
         // Đánh dấu sản phẩm là đã xóa
         product.setDeleted(true);
+        product.setUpdatedAt(LocalDateTime.now());
+
+        // Lưu thông tin người cập nhật
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            product.setUpdatedBy(currentUser);
+        }
 
         // Lưu sản phẩm sau khi thay đổi
         productRepository.save(product);
@@ -95,6 +124,7 @@ public class ProductService {
     public void softDeleteManyProducts(List<Long> productIds) {
         // Lấy tất cả sản phẩm theo danh sách IDs
         List<Product> products = productRepository.findAllById(productIds);
+        User currentUser = getCurrentUser();
 
         for (Product product : products) {
             // Cập nhật số lượng của sản phẩm về 0
@@ -108,6 +138,12 @@ public class ProductService {
 
             // Đánh dấu sản phẩm là đã xóa
             product.setDeleted(true);
+            product.setUpdatedAt(LocalDateTime.now());
+
+            // Lưu thông tin người cập nhật
+            if (currentUser != null) {
+                product.setUpdatedBy(currentUser);
+            }
 
             // Lưu sản phẩm sau khi thay đổi
             productRepository.save(product);
@@ -135,7 +171,6 @@ public class ProductService {
                 .collect(Collectors.toList());
 
         // Lấy danh sách các variant của sản phẩm
-        // Lấy danh sách các variant của sản phẩm
         List<ProductVariantResponseDto> variants = product.getVariants().stream()
                 .map(variant -> {
                     // Kiểm tra nếu size và color không null thì lấy tên, nếu null thì gán "Chưa có
@@ -150,6 +185,9 @@ public class ProductService {
                 })
                 .collect(Collectors.toList());
 
+        // Lấy thông tin người cập nhật
+        String updatedByName = (product.getUpdatedBy() != null) ? product.getUpdatedBy().getFullName() : null;
+
         // Trả về thông tin sản phẩm dưới dạng DTO
         return new ProductResponseDto(
                 product.getName(),
@@ -159,7 +197,9 @@ public class ProductService {
                 categorySlugs,
                 colorNames,
                 sizeNames,
-                variants);
+                variants,
+                product.getUpdatedAt(),
+                updatedByName);
     }
 
     public Long updateProduct(Long productId, ProductCreateDto productDTO) throws Exception {
@@ -174,6 +214,12 @@ public class ProductService {
         product.setSalePrice(productDTO.getSalePrice() > 0 ? productDTO.getSalePrice() : 0);
         product.setUpdatedAt(LocalDateTime.now());
         product.setDeleted(false); // Đảm bảo trạng thái không bị xóa
+
+        // Lưu thông tin người cập nhật
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            product.setUpdatedBy(currentUser);
+        }
 
         // Xóa danh mục cũ và cập nhật danh mục mới
         product.setCategories(new ArrayList<>());
@@ -334,6 +380,12 @@ public class ProductService {
 
         // Cập nhật thời gian chỉnh sửa
         product.setUpdatedAt(LocalDateTime.now());
+
+        // Lưu thông tin người cập nhật
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            product.setUpdatedBy(currentUser);
+        }
 
         // Lưu sản phẩm sau khi thay đổi
         productRepository.save(product);

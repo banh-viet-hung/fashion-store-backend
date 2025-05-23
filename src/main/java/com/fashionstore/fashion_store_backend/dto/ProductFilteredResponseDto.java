@@ -22,6 +22,7 @@ public class ProductFilteredResponseDto {
     private boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String updatedBy; // Tên người cập nhật cuối cùng
 
     // Constructor nhận đối tượng Product
     public ProductFilteredResponseDto(Product product) {
@@ -36,5 +37,7 @@ public class ProductFilteredResponseDto {
         this.deleted = product.isDeleted();
         this.createdAt = product.getCreatedAt();
         this.updatedAt = product.getUpdatedAt();
+        // Lấy tên người cập nhật nếu có
+        this.updatedBy = product.getUpdatedBy() != null ? product.getUpdatedBy().getFullName() : null;
     }
 }
